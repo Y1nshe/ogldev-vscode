@@ -1,0 +1,23 @@
+#version 400
+
+layout (vertices = 4) out;
+
+uniform float gOuterLevelLeft;
+uniform float gOuterLevelBottom;
+uniform float gOuterLevelRight;
+uniform float gOuterLevelTop;
+uniform float gInnerLevelTopBottom;
+uniform float gInnerLevelLeftRight;
+
+void main()
+{
+    gl_out[gl_InvocationID].gl_Position = gl_in[gl_InvocationID].gl_Position;
+
+    gl_TessLevelOuter[0] = gOuterLevelLeft;
+    gl_TessLevelOuter[1] = gOuterLevelBottom;
+    gl_TessLevelOuter[2] = gOuterLevelRight;
+    gl_TessLevelOuter[3] = gOuterLevelTop;
+
+    gl_TessLevelInner[0] = gInnerLevelTopBottom;
+    gl_TessLevelInner[1] = gInnerLevelLeftRight;
+}
