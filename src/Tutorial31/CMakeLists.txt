@@ -1,23 +1,32 @@
 cmake_minimum_required(VERSION 3.16) # 提高版本要求以使用更现代的 CMake 功能
 
 # 定义教程名称和编号 (方便引用)
-set(TUTORIAL_NAME Tutorial01)
-set(TUTORIAL_NUM 01)
+set(TUTORIAL_NAME Tutorial31)
+set(TUTORIAL_NUM 31)
 
 # --- 源文件 ---
 # 列出此教程特定的源文件 (相对于此 CMakeLists.txt)
 set(TUTORIAL_SOURCES
-    ${CMAKE_CURRENT_SOURCE_DIR}/tutorial01.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/picking_technique.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/picking_texture.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/simple_color_technique.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/tutorial31.cpp
 )
 
 # --- 资源文件 ---
 # 列出需要复制到构建目录的资源文件 (相对于此 CMakeLists.txt)
 set(RESOURCE_FILES
-    
+    picking.fs
+    picking.vs
+    simple_color.fs
+    simple_color.vs
 )
 
 # --- 依赖项列表 (用于检查是否需要 DemoLITION 资源) ---
-set(DEPENDENCIES_LIST GLUT::GLUT)
+set(DEPENDENCIES_LIST GLEW::glew
+    assimp::assimp
+    glfw
+    meshoptimizer)
 
 # --- 定义可执行目标 ---
 add_executable(${TUTORIAL_NAME} ${TUTORIAL_SOURCES})

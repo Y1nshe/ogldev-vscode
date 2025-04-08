@@ -15,8 +15,7 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-    Practical Skeletal Animation
-
+    Fog Rendering
 */
 
 #include <stdio.h>
@@ -42,18 +41,18 @@ static void CursorPosCallback(GLFWwindow* window, double x, double y);
 static void MouseButtonCallback(GLFWwindow* window, int Button, int Action, int Mode);
 
 
-class Tutorial40
+class Tutorial39
 {
 public:
 
-    Tutorial40()
+    Tutorial39()
     {
         m_dirLight.WorldDirection = Vector3f(0.0f, -1.0f, 1.0f);
         m_dirLight.DiffuseIntensity = 1.0f;
-        m_dirLight.AmbientIntensity = 0.5f;
+        m_dirLight.AmbientIntensity = 0.1f;
     }
 
-    virtual ~Tutorial40()
+    virtual ~Tutorial39()
     {
         SAFE_DELETE(m_pGameCamera);
     }
@@ -72,7 +71,6 @@ public:
         InitRenderer();
 
         m_startTime = GetCurrentTimeMillis();
-        m_currentTime = m_startTime;
     }
 
 
@@ -92,16 +90,21 @@ public:
 
         m_pGameCamera->OnRender();
 
-        if (m_runAnimation) {
-            m_currentTime = GetCurrentTimeMillis();
+        long long CurrentTime = GetCurrentTimeMillis();
+        float RunningTime = (float)((double)CurrentTime - (double)m_startTime) / 1000.0f;
+
+        if (m_isAnimatedFog) {
+            static float FogTime = 0.0f;
+#ifdef _WIN64
+            float scale = 0.000000035f;
+#else
+            float scale = 0.0000000000035f; // need to slow it down a bit on Linux
+#endif
+            FogTime += scale * ((float)rand()/10.0f) * RunningTime;
+            m_phongRenderer.UpdateAnimatedFogTime(FogTime);
         }
 
-        float AnimationTimeSec = (float)((double)m_currentTime - (double)m_startTime) / 1000.0f;
-
-        float TotalPauseTimeSec = (float)((double)m_totalPauseTime / 1000.0f);
-        AnimationTimeSec -= TotalPauseTimeSec;
-
-        m_phongRenderer.RenderAnimation(m_pMesh, AnimationTimeSec, m_animationIndex);
+        m_phongRenderer.Render(m_pTerrain);
     }
 
 
@@ -119,40 +122,47 @@ public:
         if (state == GLFW_PRESS) {
 
             switch (key) {
-            case GLFW_KEY_0:
-                m_animationIndex = 0;
-                break;
-
-            case GLFW_KEY_1:
-                m_animationIndex = 1;
-                break;
-
-            case GLFW_KEY_2:
-                m_animationIndex = 2;
-                break;
-
-            case GLFW_KEY_3:
-                m_animationIndex = 3;
-                break;
-
-            case GLFW_KEY_SPACE:
-                m_runAnimation = !m_runAnimation;
-                if (m_runAnimation) {
-                    long long CurrentTime = GetCurrentTimeMillis();
-                    // printf("Resumed at %lld\n", CurrentTime);
-                    m_totalPauseTime += (CurrentTime - m_pauseStart);
-                    // printf("Total pause time %lld\n", m_totalPauseTime);
-                } else {
-                    m_pauseStart = GetCurrentTimeMillis();
-                    // printf("Paused at %lld\n", GetCurrentTimeMillis());
-                }
-                break;
-
             case GLFW_KEY_ESCAPE:
             case GLFW_KEY_Q:
                 glfwDestroyWindow(window);
                 glfwTerminate();
                 exit(0);
+
+            case GLFW_KEY_0:
+                printf("No fog\n");
+                m_isAnimatedFog = false;
+                m_phongRenderer.DisableFog();
+                break;
+
+            case GLFW_KEY_1:
+                printf("Linear fog\n");
+                m_isAnimatedFog = false;
+                m_phongRenderer.SetLinearFog(m_fogStart, m_fogEnd, m_fogColor);
+                break;
+
+            case GLFW_KEY_2:
+                printf("Exponential fog\n");
+                m_isAnimatedFog = false;
+                m_phongRenderer.SetExpFog(m_fogEnd, m_fogColor, m_fogDensity);
+                break;
+
+            case GLFW_KEY_3:
+                printf("Exponential squared fog\n");
+                m_isAnimatedFog = false;
+                m_phongRenderer.SetExpSquaredFog(m_fogEnd, m_fogColor, m_fogDensity);
+                break;
+
+            case GLFW_KEY_4:
+                printf("Layered fog\n");
+                m_isAnimatedFog = false;
+                m_phongRenderer.SetLayeredFog(m_fogTop, m_fogEnd, m_fogColor);
+                break;
+
+            case GLFW_KEY_5:
+                printf("Animated fog\n");
+                m_phongRenderer.SetAnimatedFog(m_fogEnd, m_fogDensity, m_fogColor);
+                m_isAnimatedFog = true;
+                break;
             }
         }
 
@@ -172,7 +182,7 @@ private:
         int major_ver = 0;
         int minor_ver = 0;
         bool is_full_screen = false;
-        window = glfw_init(major_ver, minor_ver, WINDOW_WIDTH, WINDOW_HEIGHT, is_full_screen, "Tutorial 40");
+        window = glfw_init(major_ver, minor_ver, WINDOW_WIDTH, WINDOW_HEIGHT, is_full_screen, "Tutorial 39");
 
         glfwSetCursorPos(window, WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2);
     }
@@ -211,37 +221,27 @@ private:
 
     void InitMesh()
     {
-        m_pMesh = new SkinnedMesh();
-
-        if (!m_pMesh->LoadMesh("../Content/iclone-7-raptoid-mascot/scene.gltf")) {
-            printf("Missing mesh file\n");
-            printf("You can download it from %s\n",
-                "https://sketchfab.com/3d-models/iclone-7-raptoid-mascot-free-download-56a3e10a73924843949ae7a9800c97c7");
-        }
-
-        m_pMesh->SetRotation(90.0f, -45.0f, 0.0f);
-
-       // m_pMesh->LoadMesh("../Content/boblampclean.md5mesh");
-      //  m_pMesh->SetRotation(0.0f, 180.0f, 0.0f);
-        m_pMesh->SetPosition(0.0f, 0.0f, 55.0f);
-        m_pMesh->SetScale(0.1f);
+        m_pTerrain = new BasicMesh();
+        m_pTerrain->LoadMesh("../Content/terrain2.obj");
+        m_pTerrain->SetPosition(0.0f, 0.0f, 0.0f);
     }
 
     GLFWwindow* window = NULL;
     BasicCamera* m_pGameCamera = NULL;
     PhongRenderer m_phongRenderer;
-    SkinnedMesh* m_pMesh = NULL;
+    BasicMesh* m_pTerrain = NULL;
     PersProjInfo m_persProjInfo;
     DirectionalLight m_dirLight;
+    float m_fogStart = 5.0f;
+    float m_fogEnd = 100.0f;
+    float m_fogTop = 2.5f;
+    float m_fogDensity = 0.66f;
+    Vector3f m_fogColor = Vector3f(152.0f/256.0f, 152.0f/256.0f, 152.0f/256.0f);
+    bool m_isAnimatedFog = false;
     long long m_startTime = 0;
-    long long m_currentTime = 0;
-    bool m_runAnimation = true;
-    long long m_totalPauseTime = 0;
-    long long m_pauseStart = 0;
-    int m_animationIndex = 0;
 };
 
-Tutorial40* app = NULL;
+Tutorial39* app = NULL;
 
 static void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
@@ -267,7 +267,7 @@ static void MouseButtonCallback(GLFWwindow* window, int Button, int Action, int 
 
 int main(int argc, char** argv)
 {
-    app = new Tutorial40();
+    app = new Tutorial39();
 
     app->Init();
 

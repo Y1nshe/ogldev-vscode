@@ -15,8 +15,7 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-    Practical Skeletal Animation
-
+    Physically Based Rendering #1 (intro)
 */
 
 #include <stdio.h>
@@ -42,18 +41,37 @@ static void CursorPosCallback(GLFWwindow* window, double x, double y);
 static void MouseButtonCallback(GLFWwindow* window, int Button, int Action, int Mode);
 
 
-class Tutorial40
+class Tutorial43
 {
 public:
 
-    Tutorial40()
+    Tutorial43()
     {
-        m_dirLight.WorldDirection = Vector3f(0.0f, -1.0f, 1.0f);
-        m_dirLight.DiffuseIntensity = 1.0f;
-        m_dirLight.AmbientIntensity = 0.5f;
+        m_dirLight.WorldDirection = Vector3f(1.0f, -0.15f, 1.0f);
+        m_dirLight.DiffuseIntensity = 4.0f;
+      //  m_dirLight.AmbientIntensity = 0.15f;
+
+        m_pointLights[0].WorldPosition = Vector3f(5.0f, 5.0f, 5.0f);
+        //        m_pointLights[0].DiffuseIntensity = 100.0f;
+
+        m_pointLights[1].WorldPosition = Vector3f(-7.0f, 3.0f, 7.0f);
+        //        m_pointLights[1].DiffuseIntensity = 100.0f;
+
+        float metalRough = 0.43f;
+
+        // Gold
+        m_meshData[0] = { Vector3f(-20.0f, 0.0f, 75.0f), Vector3f(1, 0.71f, 0.29f) };
+        // Copper
+        m_meshData[1] = { Vector3f(-10.0f, 0.0f, 75.0f), Vector3f(0.95f, 0.64f, 0.54f) };
+        // Aluminum
+        m_meshData[2] = { Vector3f(-0.0f, 0.0f, 75.0f), Vector3f(0.91f, 0.92f, 0.92f) };
+        // Titanium
+        m_meshData[3] = { Vector3f(10.0f, 0.0f, 75.0f), Vector3f(0.542f, 0.497f, 0.449f) };
+        // Silver
+        m_meshData[4] = { Vector3f(20.0f, 0.0f, 75.0f), Vector3f(0.95f, 0.93f, 0.88f) };
     }
 
-    virtual ~Tutorial40()
+    virtual ~Tutorial43()
     {
         SAFE_DELETE(m_pGameCamera);
     }
@@ -92,16 +110,32 @@ public:
 
         m_pGameCamera->OnRender();
 
-        if (m_runAnimation) {
-            m_currentTime = GetCurrentTimeMillis();
+        static float foo = 0.0f;
+        foo += 0.01f;
+
+        m_pointLights[0].WorldPosition = Vector3f(sinf(foo) * 7, 3.0f, cosf(foo) * 7.0f);
+        m_phongRenderer.UpdatePointLightPos(0, m_pointLights[0].WorldPosition);
+
+        m_dirLight.WorldDirection = Vector3f(sinf(foo), -0.5f, cosf(foo));
+        m_phongRenderer.UpdateDirLightDir(m_dirLight.WorldDirection);
+
+        for (int i = 0 ; i < ARRAY_SIZE_IN_ELEMENTS(m_meshData) ; i++) {
+            m_pMesh->SetPosition(m_meshData[i].Pos);
+            m_pMesh->GetPBRMaterial().Roughness = 0.43f;
+            m_pMesh->GetPBRMaterial().IsMetal = true;
+            m_pMesh->GetPBRMaterial().Color = m_meshData[i].Color;
+            m_phongRenderer.Render(m_pMesh);
         }
 
-        float AnimationTimeSec = (float)((double)m_currentTime - (double)m_startTime) / 1000.0f;
+        float Roughness[] = { 0.1f, 0.2f, 0.3f, 0.4f, 0.5f };
 
-        float TotalPauseTimeSec = (float)((double)m_totalPauseTime / 1000.0f);
-        AnimationTimeSec -= TotalPauseTimeSec;
-
-        m_phongRenderer.RenderAnimation(m_pMesh, AnimationTimeSec, m_animationIndex);
+        for (int i = 0 ; i < ARRAY_SIZE_IN_ELEMENTS(m_meshData) ; i++) {
+            m_pMesh->SetPosition(m_meshData[i].Pos + Vector3f(0.0f, 15.0f, 0.0f));
+            m_pMesh->GetPBRMaterial().Roughness = Roughness[i];
+            m_pMesh->GetPBRMaterial().IsMetal = false;
+            m_pMesh->GetPBRMaterial().Color = Vector3f(0.1f, 0.33f, 0.17f);
+            m_phongRenderer.Render(m_pMesh);
+        }
     }
 
 
@@ -117,37 +151,7 @@ public:
     void KeyboardCB(uint key, int state)
     {
         if (state == GLFW_PRESS) {
-
             switch (key) {
-            case GLFW_KEY_0:
-                m_animationIndex = 0;
-                break;
-
-            case GLFW_KEY_1:
-                m_animationIndex = 1;
-                break;
-
-            case GLFW_KEY_2:
-                m_animationIndex = 2;
-                break;
-
-            case GLFW_KEY_3:
-                m_animationIndex = 3;
-                break;
-
-            case GLFW_KEY_SPACE:
-                m_runAnimation = !m_runAnimation;
-                if (m_runAnimation) {
-                    long long CurrentTime = GetCurrentTimeMillis();
-                    // printf("Resumed at %lld\n", CurrentTime);
-                    m_totalPauseTime += (CurrentTime - m_pauseStart);
-                    // printf("Total pause time %lld\n", m_totalPauseTime);
-                } else {
-                    m_pauseStart = GetCurrentTimeMillis();
-                    // printf("Paused at %lld\n", GetCurrentTimeMillis());
-                }
-                break;
-
             case GLFW_KEY_ESCAPE:
             case GLFW_KEY_Q:
                 glfwDestroyWindow(window);
@@ -172,7 +176,7 @@ private:
         int major_ver = 0;
         int minor_ver = 0;
         bool is_full_screen = false;
-        window = glfw_init(major_ver, minor_ver, WINDOW_WIDTH, WINDOW_HEIGHT, is_full_screen, "Tutorial 40");
+        window = glfw_init(major_ver, minor_ver, WINDOW_WIDTH, WINDOW_HEIGHT, is_full_screen, "Tutorial 43");
 
         glfwSetCursorPos(window, WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2);
     }
@@ -188,13 +192,13 @@ private:
 
     void InitCamera()
     {
-        Vector3f Pos(0.0f, 0.0f, 0.0f);
-        Vector3f Target(0.0f, 0.0f, 1.0f);
+        Vector3f Pos(0.0f, 35.0f, 0.0f);
+        Vector3f Target(0.0f, -0.25f, 1.0f);
         Vector3f Up(0.0, 1.0f, 0.0f);
 
         float FOV = 45.0f;
         float zNear = 0.1f;
-        float zFar = 100.0f;
+        float zFar = 1000.0f;
         PersProjInfo persProjInfo = { FOV, (float)WINDOW_WIDTH, (float)WINDOW_HEIGHT, zNear, zFar };
 
         m_pGameCamera = new BasicCamera(persProjInfo, Pos, Target, Up);
@@ -206,25 +210,18 @@ private:
         m_phongRenderer.InitPhongRenderer();
         m_phongRenderer.SetCamera(m_pGameCamera);
         m_phongRenderer.SetDirLight(m_dirLight);
+        m_phongRenderer.SetPointLights(ARRAY_SIZE_IN_ELEMENTS(m_pointLights), &m_pointLights[0]);
+        m_phongRenderer.SetPBR(true);
     }
 
 
     void InitMesh()
     {
         m_pMesh = new SkinnedMesh();
-
-        if (!m_pMesh->LoadMesh("../Content/iclone-7-raptoid-mascot/scene.gltf")) {
-            printf("Missing mesh file\n");
-            printf("You can download it from %s\n",
-                "https://sketchfab.com/3d-models/iclone-7-raptoid-mascot-free-download-56a3e10a73924843949ae7a9800c97c7");
-        }
-
-        m_pMesh->SetRotation(90.0f, -45.0f, 0.0f);
-
-       // m_pMesh->LoadMesh("../Content/boblampclean.md5mesh");
-      //  m_pMesh->SetRotation(0.0f, 180.0f, 0.0f);
-        m_pMesh->SetPosition(0.0f, 0.0f, 55.0f);
-        m_pMesh->SetScale(0.1f);
+        //        m_pMesh->LoadMesh("../Content/spot/spot_triangulated.obj");
+        m_pMesh->LoadMesh("../Content/dragon.obj");
+        m_pMesh->SetPBR(true);
+        m_pMesh->SetRotation(0.0f, 90.0f, 0.0f);
     }
 
     GLFWwindow* window = NULL;
@@ -233,15 +230,17 @@ private:
     SkinnedMesh* m_pMesh = NULL;
     PersProjInfo m_persProjInfo;
     DirectionalLight m_dirLight;
+    PointLight m_pointLights[2];
     long long m_startTime = 0;
     long long m_currentTime = 0;
-    bool m_runAnimation = true;
-    long long m_totalPauseTime = 0;
-    long long m_pauseStart = 0;
-    int m_animationIndex = 0;
+
+    struct {
+        Vector3f Pos;
+        Vector3f Color;
+    } m_meshData[5];
 };
 
-Tutorial40* app = NULL;
+Tutorial43* app = NULL;
 
 static void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
@@ -267,11 +266,11 @@ static void MouseButtonCallback(GLFWwindow* window, int Button, int Action, int 
 
 int main(int argc, char** argv)
 {
-    app = new Tutorial40();
+    app = new Tutorial43();
 
     app->Init();
 
-    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+    glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
     glFrontFace(GL_CW);
     glCullFace(GL_BACK);
     glEnable(GL_CULL_FACE);

@@ -15,8 +15,7 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-    Practical Skeletal Animation
-
+    Toon Shading & Rim Lighting
 */
 
 #include <stdio.h>
@@ -42,20 +41,33 @@ static void CursorPosCallback(GLFWwindow* window, double x, double y);
 static void MouseButtonCallback(GLFWwindow* window, int Button, int Action, int Mode);
 
 
-class Tutorial40
+class Tutorial34
 {
 public:
 
-    Tutorial40()
+    Tutorial34()
     {
-        m_dirLight.WorldDirection = Vector3f(0.0f, -1.0f, 1.0f);
+        m_pointLights[0].WorldPosition = Vector3f(20.0f, 0.0f, 0.0f);
+        m_pointLights[0].DiffuseIntensity = 1.0f;
+        m_pointLights[0].Color = Vector3f(1.0f, 1.0f, 1.0f);
+        m_pointLights[0].Attenuation.Linear = 0.1f;
+        m_pointLights[0].Attenuation.Exp = 0.0f;
+
+        m_pointLights[1].WorldPosition = Vector3f(10.0f, 0.0f, 0.0f);
+        m_pointLights[1].DiffuseIntensity = 0.25f;
+        m_pointLights[1].Color = Vector3f(1.0f, 1.0f, 1.0f);
+        m_pointLights[1].Attenuation.Linear = 0.0f;
+        m_pointLights[1].Attenuation.Exp = 0.2f;
+
+        m_dirLight.WorldDirection = Vector3f(1.0f, -1.0f, 0.0f);
         m_dirLight.DiffuseIntensity = 1.0f;
-        m_dirLight.AmbientIntensity = 0.5f;
+        m_dirLight.AmbientIntensity = 0.1f;
     }
 
-    virtual ~Tutorial40()
+    virtual ~Tutorial34()
     {
         SAFE_DELETE(m_pGameCamera);
+        SAFE_DELETE(m_pMesh1);
     }
 
 
@@ -70,9 +82,6 @@ public:
         InitMesh();
 
         InitRenderer();
-
-        m_startTime = GetCurrentTimeMillis();
-        m_currentTime = m_startTime;
     }
 
 
@@ -92,16 +101,23 @@ public:
 
         m_pGameCamera->OnRender();
 
-        if (m_runAnimation) {
-            m_currentTime = GetCurrentTimeMillis();
-        }
+        static float foo = 0.0f;
+        foo += 0.002f;
 
-        float AnimationTimeSec = (float)((double)m_currentTime - (double)m_startTime) / 1000.0f;
+        m_pGameCamera->SetPosition(-sinf(foo) * 13.0f, 8.0f, -cosf(foo) * 13.0f);
+        Vector3f Target(m_pMesh1->GetPosition() - m_pGameCamera->GetPos() + Vector3f(0.0f, 3.0f, 0.0f));
+        m_pGameCamera->SetTarget(Target);
 
-        float TotalPauseTimeSec = (float)((double)m_totalPauseTime / 1000.0f);
-        AnimationTimeSec -= TotalPauseTimeSec;
+        m_dirLight.WorldDirection = Vector3f(sinf(foo), -0.5f, cosf(foo));
+        m_phongRenderer.UpdateDirLightDir(m_dirLight.WorldDirection);
+        m_phongRenderer.ControlRimLight(m_isRimLightEnabled);
+        m_phongRenderer.ControlCellShading(m_isCellShadingEnabled);
+        m_phongRenderer.Render(m_pMesh1);
 
-        m_phongRenderer.RenderAnimation(m_pMesh, AnimationTimeSec, m_animationIndex);
+        // Don't use rim lighting and cell shading for the terrain
+        m_phongRenderer.ControlRimLight(false);
+        m_phongRenderer.ControlCellShading(false);
+        m_phongRenderer.Render(m_pTerrain);
     }
 
 
@@ -117,44 +133,45 @@ public:
     void KeyboardCB(uint key, int state)
     {
         if (state == GLFW_PRESS) {
-
             switch (key) {
-            case GLFW_KEY_0:
-                m_animationIndex = 0;
-                break;
-
-            case GLFW_KEY_1:
-                m_animationIndex = 1;
-                break;
-
-            case GLFW_KEY_2:
-                m_animationIndex = 2;
-                break;
-
-            case GLFW_KEY_3:
-                m_animationIndex = 3;
-                break;
-
-            case GLFW_KEY_SPACE:
-                m_runAnimation = !m_runAnimation;
-                if (m_runAnimation) {
-                    long long CurrentTime = GetCurrentTimeMillis();
-                    // printf("Resumed at %lld\n", CurrentTime);
-                    m_totalPauseTime += (CurrentTime - m_pauseStart);
-                    // printf("Total pause time %lld\n", m_totalPauseTime);
-                } else {
-                    m_pauseStart = GetCurrentTimeMillis();
-                    // printf("Paused at %lld\n", GetCurrentTimeMillis());
-                }
-                break;
-
             case GLFW_KEY_ESCAPE:
             case GLFW_KEY_Q:
                 glfwDestroyWindow(window);
                 glfwTerminate();
                 exit(0);
+
+            case 'a':
+                m_pointLights[0].Attenuation.Linear += ATTEN_STEP;
+                m_pointLights[1].Attenuation.Linear += ATTEN_STEP;
+                break;
+
+            case GLFW_KEY_C:
+                m_isCellShadingEnabled = !m_isCellShadingEnabled;
+                break;
+
+
+            case 'z':
+                m_pointLights[0].Attenuation.Linear -= ATTEN_STEP;
+                m_pointLights[1].Attenuation.Linear -= ATTEN_STEP;
+                break;
+
+            case 's':
+                m_pointLights[0].Attenuation.Exp += ATTEN_STEP;
+                m_pointLights[1].Attenuation.Exp += ATTEN_STEP;
+                break;
+
+            case 'x':
+                m_pointLights[0].Attenuation.Exp -= ATTEN_STEP;
+                m_pointLights[1].Attenuation.Exp -= ATTEN_STEP;
+                break;
+
+            case GLFW_KEY_R:
+                m_isRimLightEnabled = !m_isRimLightEnabled;
+                break;
             }
         }
+
+        //        printf("Linear %f Exp %f\n", m_pointLights[0].Attenuation.Linear, m_pointLights[0].Attenuation.Exp);
 
         m_pGameCamera->OnKeyboard(key);
     }
@@ -172,7 +189,7 @@ private:
         int major_ver = 0;
         int minor_ver = 0;
         bool is_full_screen = false;
-        window = glfw_init(major_ver, minor_ver, WINDOW_WIDTH, WINDOW_HEIGHT, is_full_screen, "Tutorial 40");
+        window = glfw_init(major_ver, minor_ver, WINDOW_WIDTH, WINDOW_HEIGHT, is_full_screen, "Tutorial 34");
 
         glfwSetCursorPos(window, WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2);
     }
@@ -205,43 +222,43 @@ private:
     {
         m_phongRenderer.InitPhongRenderer();
         m_phongRenderer.SetCamera(m_pGameCamera);
+        //m_phongRenderer.SetPointLights(1, m_pointLights);
         m_phongRenderer.SetDirLight(m_dirLight);
     }
 
 
     void InitMesh()
     {
-        m_pMesh = new SkinnedMesh();
+        m_pMesh1 = new BasicMesh();
+        //m_pMesh1->LoadMesh("../Content/ordinary_house/ordinary_house.obj");
 
-        if (!m_pMesh->LoadMesh("../Content/iclone-7-raptoid-mascot/scene.gltf")) {
-            printf("Missing mesh file\n");
-            printf("You can download it from %s\n",
-                "https://sketchfab.com/3d-models/iclone-7-raptoid-mascot-free-download-56a3e10a73924843949ae7a9800c97c7");
-        }
+        m_pMesh1->LoadMesh("../Content/Vanguard.dae");
+        m_pMesh1->SetPosition(0.0f, 0.0f, 10.0f);
 
-        m_pMesh->SetRotation(90.0f, -45.0f, 0.0f);
-
-       // m_pMesh->LoadMesh("../Content/boblampclean.md5mesh");
-      //  m_pMesh->SetRotation(0.0f, 180.0f, 0.0f);
-        m_pMesh->SetPosition(0.0f, 0.0f, 55.0f);
-        m_pMesh->SetScale(0.1f);
+        // TODO: need to understand why we need different rotations for each OS
+#ifdef _WIN64
+        m_pMesh1->SetRotation(90.0f, 0.0f, 0.0f);
+#else
+        m_pMesh1->SetRotation(270.0f, 180.0f, 0.0f);
+#endif
+        m_pTerrain = new BasicMesh();
+        m_pTerrain->LoadMesh("../Content/box_terrain.obj");
+        m_pTerrain->SetPosition(0.0f, 0.0f, 0.0f);
     }
 
     GLFWwindow* window = NULL;
     BasicCamera* m_pGameCamera = NULL;
     PhongRenderer m_phongRenderer;
-    SkinnedMesh* m_pMesh = NULL;
+    BasicMesh* m_pMesh1 = NULL;
+    BasicMesh* m_pTerrain = NULL;
     PersProjInfo m_persProjInfo;
+    PointLight m_pointLights[LightingTechnique::MAX_POINT_LIGHTS];
+    bool m_isRimLightEnabled = false;
+    bool m_isCellShadingEnabled = false;
     DirectionalLight m_dirLight;
-    long long m_startTime = 0;
-    long long m_currentTime = 0;
-    bool m_runAnimation = true;
-    long long m_totalPauseTime = 0;
-    long long m_pauseStart = 0;
-    int m_animationIndex = 0;
 };
 
-Tutorial40* app = NULL;
+Tutorial34* app = NULL;
 
 static void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
@@ -267,7 +284,7 @@ static void MouseButtonCallback(GLFWwindow* window, int Button, int Action, int 
 
 int main(int argc, char** argv)
 {
-    app = new Tutorial40();
+    app = new Tutorial34();
 
     app->Init();
 

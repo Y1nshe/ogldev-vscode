@@ -15,7 +15,7 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-    Practical Skeletal Animation
+    Skeletal Animation Blending
 
 */
 
@@ -42,18 +42,18 @@ static void CursorPosCallback(GLFWwindow* window, double x, double y);
 static void MouseButtonCallback(GLFWwindow* window, int Button, int Action, int Mode);
 
 
-class Tutorial40
+class Tutorial42
 {
 public:
 
-    Tutorial40()
+    Tutorial42()
     {
         m_dirLight.WorldDirection = Vector3f(0.0f, -1.0f, 1.0f);
         m_dirLight.DiffuseIntensity = 1.0f;
         m_dirLight.AmbientIntensity = 0.5f;
     }
 
-    virtual ~Tutorial40()
+    virtual ~Tutorial42()
     {
         SAFE_DELETE(m_pGameCamera);
     }
@@ -92,6 +92,13 @@ public:
 
         m_pGameCamera->OnRender();
 
+        static float foo = 0.0f;
+        foo += 0.003f;
+
+        //Vector3f CameraTarget = m_pMesh->GetPosition() - m_pGameCamera->GetPos();
+        //m_pGameCamera->SetPosition(45.0f * sinf(foo), 12.0f, 45.0 * cosf(foo));
+        //m_pGameCamera->SetTarget(CameraTarget);
+
         if (m_runAnimation) {
             m_currentTime = GetCurrentTimeMillis();
         }
@@ -101,7 +108,39 @@ public:
         float TotalPauseTimeSec = (float)((double)m_totalPauseTime / 1000.0f);
         AnimationTimeSec -= TotalPauseTimeSec;
 
-        m_phongRenderer.RenderAnimation(m_pMesh, AnimationTimeSec, m_animationIndex);
+        static float BlendFactor = 0.0f;
+        static float BlendDirection = 0.0001f;
+
+        m_phongRenderer.RenderAnimationBlended(m_pMesh, AnimationTimeSec, 0, 3, m_blendFactor);
+        //m_phongRenderer.RenderAnimation(m_pMesh, AnimationTimeSec, m_animationIndex);
+
+        BlendFactor += BlendDirection;
+
+        if (BlendDirection > 0.0f) {
+            if (BlendFactor >= 0.9f || BlendFactor <= 0.1f) {
+                BlendDirection = 0.0002f;
+            } else {
+                BlendDirection = 0.001f;
+            }
+        } else {
+            if (BlendFactor >= 0.9f || BlendFactor <= 0.1f) {
+                BlendDirection = -0.0002f;
+            } else {
+                BlendDirection = -0.001f;
+            }
+        }
+
+        if (BlendFactor > 1.0f || BlendFactor < 0.0f) {
+            BlendDirection *= -1.0f;
+        }
+
+        if (BlendFactor < 0.0f) {
+            BlendFactor = 0.0f;
+        } else if (BlendFactor > 1.0f) {
+            BlendFactor = 1.0f;
+        }
+
+        m_phongRenderer.Render(m_pTerrain);
     }
 
 
@@ -116,8 +155,23 @@ public:
 
     void KeyboardCB(uint key, int state)
     {
-        if (state == GLFW_PRESS) {
+        if (key == GLFW_KEY_A) {
+            m_blendFactor += 0.005f;
+            if (m_blendFactor > 1.0f) {
+                m_blendFactor = 1.0f;
+            }
+            printf("%f\n", m_blendFactor);
+            return;
+        } else if (key == GLFW_KEY_Z) {
+            m_blendFactor -= 0.005f;
+            if (m_blendFactor < 0.0f) {
+                m_blendFactor = 0.0f;
+            }
+            printf("%f\n", m_blendFactor);
+            return;
+        }
 
+        if (state == GLFW_PRESS) {
             switch (key) {
             case GLFW_KEY_0:
                 m_animationIndex = 0;
@@ -172,7 +226,7 @@ private:
         int major_ver = 0;
         int minor_ver = 0;
         bool is_full_screen = false;
-        window = glfw_init(major_ver, minor_ver, WINDOW_WIDTH, WINDOW_HEIGHT, is_full_screen, "Tutorial 40");
+        window = glfw_init(major_ver, minor_ver, WINDOW_WIDTH, WINDOW_HEIGHT, is_full_screen, "Tutorial 42");
 
         glfwSetCursorPos(window, WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2);
     }
@@ -188,13 +242,13 @@ private:
 
     void InitCamera()
     {
-        Vector3f Pos(0.0f, 0.0f, 0.0f);
+        Vector3f Pos(0.0f, 5.0f, -30.0f);
         Vector3f Target(0.0f, 0.0f, 1.0f);
         Vector3f Up(0.0, 1.0f, 0.0f);
 
         float FOV = 45.0f;
         float zNear = 0.1f;
-        float zFar = 100.0f;
+        float zFar = 1000.0f;
         PersProjInfo persProjInfo = { FOV, (float)WINDOW_WIDTH, (float)WINDOW_HEIGHT, zNear, zFar };
 
         m_pGameCamera = new BasicCamera(persProjInfo, Pos, Target, Up);
@@ -212,25 +266,23 @@ private:
     void InitMesh()
     {
         m_pMesh = new SkinnedMesh();
+        m_pMesh->LoadMesh("../Content/iclone_7_raptoid_mascot/scene.gltf");
+        m_pMesh->SetRotation(90.0f, 0.0f, 0.0f);
+        m_pMesh->SetPosition(0.0f, 1.2f, 0.0f);
+        m_pMesh->SetScale(0.05f);
 
-        if (!m_pMesh->LoadMesh("../Content/iclone-7-raptoid-mascot/scene.gltf")) {
-            printf("Missing mesh file\n");
-            printf("You can download it from %s\n",
-                "https://sketchfab.com/3d-models/iclone-7-raptoid-mascot-free-download-56a3e10a73924843949ae7a9800c97c7");
+        m_pTerrain = new BasicMesh();
+        if (!m_pTerrain->LoadMesh("../Content/terrain_rock_boulder_cracked.obj")) {
+            printf("Error loading mesh ../Content/terrain_rock_boulder_cracked.obj");
+            exit(0);
         }
-
-        m_pMesh->SetRotation(90.0f, -45.0f, 0.0f);
-
-       // m_pMesh->LoadMesh("../Content/boblampclean.md5mesh");
-      //  m_pMesh->SetRotation(0.0f, 180.0f, 0.0f);
-        m_pMesh->SetPosition(0.0f, 0.0f, 55.0f);
-        m_pMesh->SetScale(0.1f);
     }
 
     GLFWwindow* window = NULL;
     BasicCamera* m_pGameCamera = NULL;
     PhongRenderer m_phongRenderer;
     SkinnedMesh* m_pMesh = NULL;
+    BasicMesh* m_pTerrain = NULL;
     PersProjInfo m_persProjInfo;
     DirectionalLight m_dirLight;
     long long m_startTime = 0;
@@ -239,9 +291,10 @@ private:
     long long m_totalPauseTime = 0;
     long long m_pauseStart = 0;
     int m_animationIndex = 0;
+    float m_blendFactor = 0.0f;
 };
 
-Tutorial40* app = NULL;
+Tutorial42* app = NULL;
 
 static void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
@@ -267,11 +320,11 @@ static void MouseButtonCallback(GLFWwindow* window, int Button, int Action, int 
 
 int main(int argc, char** argv)
 {
-    app = new Tutorial40();
+    app = new Tutorial42();
 
     app->Init();
 
-    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+    glClearColor(0.1f, 0.2f, 0.1f, 0.0f);
     glFrontFace(GL_CW);
     glCullFace(GL_BACK);
     glEnable(GL_CULL_FACE);

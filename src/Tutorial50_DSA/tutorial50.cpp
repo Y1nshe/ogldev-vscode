@@ -15,7 +15,7 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-    Practical Skeletal Animation
+    Direct State Object
 
 */
 
@@ -42,18 +42,18 @@ static void CursorPosCallback(GLFWwindow* window, double x, double y);
 static void MouseButtonCallback(GLFWwindow* window, int Button, int Action, int Mode);
 
 
-class Tutorial40
+class Tutorial50
 {
 public:
 
-    Tutorial40()
+    Tutorial50()
     {
-        m_dirLight.WorldDirection = Vector3f(0.0f, -1.0f, 1.0f);
-        m_dirLight.DiffuseIntensity = 1.0f;
-        m_dirLight.AmbientIntensity = 0.5f;
+        m_dirLight.WorldDirection = Vector3f(1.0f, -1.0f, 0.0f);
+        m_dirLight.DiffuseIntensity = 2.2f;
+        m_dirLight.AmbientIntensity = 1.5f;
     }
 
-    virtual ~Tutorial40()
+    virtual ~Tutorial50()
     {
         SAFE_DELETE(m_pGameCamera);
     }
@@ -101,7 +101,11 @@ public:
         float TotalPauseTimeSec = (float)((double)m_totalPauseTime / 1000.0f);
         AnimationTimeSec -= TotalPauseTimeSec;
 
-        m_phongRenderer.RenderAnimation(m_pMesh, AnimationTimeSec, m_animationIndex);
+        static float YAngle = 0.0f;
+        m_pMesh->SetRotation(90.0f, YAngle, 0.0f);
+        YAngle += 0.25f;
+
+        m_phongRenderer.Render(m_pMesh);
     }
 
 
@@ -111,7 +115,9 @@ public:
 
     void PassiveMouseCB(int x, int y)
     {
-        m_pGameCamera->OnMouse(x, y);
+        if (m_interactive) {
+            m_pGameCamera->OnMouse(x, y);
+        }        
     }
 
     void KeyboardCB(uint key, int state)
@@ -148,6 +154,22 @@ public:
                 }
                 break;
 
+
+            case GLFW_KEY_Z:
+                m_isWireframe = !m_isWireframe;
+
+                if (m_isWireframe) {
+                    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+                }
+                else {
+                    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+                }
+                break; 
+
+            case GLFW_KEY_P:
+                m_interactive = !m_interactive;
+                break;
+
             case GLFW_KEY_ESCAPE:
             case GLFW_KEY_Q:
                 glfwDestroyWindow(window);
@@ -169,10 +191,10 @@ private:
 
     void CreateWindow()
     {
-        int major_ver = 0;
-        int minor_ver = 0;
+        int major_ver = 4;
+        int minor_ver = 6;
         bool is_full_screen = false;
-        window = glfw_init(major_ver, minor_ver, WINDOW_WIDTH, WINDOW_HEIGHT, is_full_screen, "Tutorial 40");
+        window = glfw_init(major_ver, minor_ver, WINDOW_WIDTH, WINDOW_HEIGHT, is_full_screen, "Tutorial 50");
 
         glfwSetCursorPos(window, WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2);
     }
@@ -193,8 +215,8 @@ private:
         Vector3f Up(0.0, 1.0f, 0.0f);
 
         float FOV = 45.0f;
-        float zNear = 0.1f;
-        float zFar = 100.0f;
+        float zNear = 1.0f;
+        float zFar = 1000.0f;
         PersProjInfo persProjInfo = { FOV, (float)WINDOW_WIDTH, (float)WINDOW_HEIGHT, zNear, zFar };
 
         m_pGameCamera = new BasicCamera(persProjInfo, Pos, Target, Up);
@@ -203,34 +225,27 @@ private:
 
     void InitRenderer()
     {
-        m_phongRenderer.InitPhongRenderer();
+        m_phongRenderer.InitPhongRenderer(LightingTechnique::SUBTECH_WIREFRAME_ON_MESH);
         m_phongRenderer.SetCamera(m_pGameCamera);
         m_phongRenderer.SetDirLight(m_dirLight);
+        m_phongRenderer.SetWireframeLineWidth(1.0f);
+        m_phongRenderer.SetWireframeColor(Vector4f(.0f, 0.0f, 1.0f, 1.0f));
     }
 
 
     void InitMesh()
     {
-        m_pMesh = new SkinnedMesh();
+        m_pMesh = new BasicMesh();
+      
+        m_pMesh->LoadMesh("../Content/Vanguard.dae");
 
-        if (!m_pMesh->LoadMesh("../Content/iclone-7-raptoid-mascot/scene.gltf")) {
-            printf("Missing mesh file\n");
-            printf("You can download it from %s\n",
-                "https://sketchfab.com/3d-models/iclone-7-raptoid-mascot-free-download-56a3e10a73924843949ae7a9800c97c7");
-        }
-
-        m_pMesh->SetRotation(90.0f, -45.0f, 0.0f);
-
-       // m_pMesh->LoadMesh("../Content/boblampclean.md5mesh");
-      //  m_pMesh->SetRotation(0.0f, 180.0f, 0.0f);
-        m_pMesh->SetPosition(0.0f, 0.0f, 55.0f);
-        m_pMesh->SetScale(0.1f);
+        m_pMesh->SetPosition(0.0f, 0.0f, 15.0f);      
     }
 
     GLFWwindow* window = NULL;
     BasicCamera* m_pGameCamera = NULL;
     PhongRenderer m_phongRenderer;
-    SkinnedMesh* m_pMesh = NULL;
+    BasicMesh* m_pMesh = NULL;
     PersProjInfo m_persProjInfo;
     DirectionalLight m_dirLight;
     long long m_startTime = 0;
@@ -239,9 +254,11 @@ private:
     long long m_totalPauseTime = 0;
     long long m_pauseStart = 0;
     int m_animationIndex = 0;
+    bool m_isWireframe = false;
+    bool m_interactive = true;
 };
 
-Tutorial40* app = NULL;
+Tutorial50* app = NULL;
 
 static void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
@@ -267,11 +284,11 @@ static void MouseButtonCallback(GLFWwindow* window, int Button, int Action, int 
 
 int main(int argc, char** argv)
 {
-    app = new Tutorial40();
+    app = new Tutorial50();
 
     app->Init();
 
-    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+    glClearColor(0.1f, 0.1f, 0.5f, 0.0f);
     glFrontFace(GL_CW);
     glCullFace(GL_BACK);
     glEnable(GL_CULL_FACE);
