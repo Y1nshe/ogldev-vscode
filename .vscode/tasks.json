@@ -1,0 +1,57 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Build Current Tutorial (Ninja)",
+      "type": "shell",
+      // 使用 msys2_shell.cmd 启动 MINGW64 环境并执行 ninja
+      "command": "ninja ${fileDirnameBasename}",
+      "options": {
+        // cwd 仍然是 build 目录，msys2_shell -here 会在这里执行
+        "cwd": "${workspaceFolder}/build",
+        "shell": {
+            "executable": "C:\\msys64\\msys2_shell.cmd",
+            "args": [
+                "-mingw64", // 指定 MINGW64 环境
+                "-no-start", // 不需要启动新的交互式 shell 窗口
+                "-defterm",  // 使用默认终端行为
+                "-here",     // 在当前工作目录启动
+                "-c",        // 执行后续的命令字符串
+            ]
+        }
+      },
+      "group": {
+        // 设置为默认构建任务，会在按 F5 调试前运行
+        "kind": "build",
+        "isDefault": true
+      },
+      // 使用 $gcc 问题匹配器来解析 C++ 编译错误和警告
+      "problemMatcher": [
+        "$gcc"
+      ],
+      "detail": "在 MSYS2 MINGW64 环境中使用 Ninja 构建当前教程。需要先运行 CMake 配置任务。"
+    },
+    {
+      "label": "Configure Project (CMake + Ninja)",
+      "type": "shell",
+      // 使用 msys2_shell.cmd 启动 MINGW64 环境并执行 cmake
+      "command": "C:/msys64/msys2_shell.cmd",
+      "args": [
+        "-mingw64",
+        "-no-start",
+        "-defterm",
+        "-here",
+        "-c",
+        // 在 MINGW64 shell 中执行 cmake 命令
+        // 使用正斜杠 / 作为路径分隔符通常在 shell 命令中更安全
+        "cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Debug"
+      ],
+      "options": {
+        // 在 build 目录中运行
+        "cwd": "${workspaceFolder}/build"
+      },
+      "problemMatcher": [],
+      "detail": "在 MSYS2 MINGW64 环境的 'build' 目录中配置 CMake 项目 (Ninja 生成器)。初次构建或 CMakeLists.txt 更改后需要运行此任务。"
+    }
+  ]
+}
