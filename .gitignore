@@ -43,7 +43,6 @@ read.lock
 *.pch
 *.iobj
 *.ipdb
-Content/*
 data/*
 VulkanSync/*
 Include/assimp5/assimp.old/*
