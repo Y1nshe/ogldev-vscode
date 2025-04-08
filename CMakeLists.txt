@@ -9,11 +9,105 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-# 设置构建输出路径 (可选，方便管理)
+# 设置全局构建输出路径 (可执行文件到 build/bin, 库到 build/lib)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
+# --- 在 build/bin 目录创建指向源 Content 目录的链接 ---
+if(EXISTS "${CMAKE_SOURCE_DIR}/Content")
+    # 定义链接所在的目录 (build/bin)
+    set(LINK_PARENT_DIR "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
+    set(LINK_NAME "Content") # 链接名称
+    set(TARGET_DIR "${CMAKE_SOURCE_DIR}/Content") # 链接指向的目标（源目录）
+    set(LINK_PATH "${LINK_PARENT_DIR}/${LINK_NAME}") # 链接的完整路径 (build/bin/Content)
+
+    # 确保链接所在的目录存在
+    file(MAKE_DIRECTORY "${LINK_PARENT_DIR}")
+
+    # 检查链接是否已存在且有效
+    if(NOT EXISTS "${LINK_PATH}")
+        message(STATUS "[Content Link] Creating link/junction in ${LINK_PARENT_DIR}: ${LINK_NAME} -> ${TARGET_DIR}")
+        if(WIN32)
+            # Windows: mklink /J <Link> <Target>
+            # 计算相对于链接所在目录的目标路径
+            file(RELATIVE_PATH TARGET_REL_PATH "${LINK_PARENT_DIR}" "${TARGET_DIR}")
+            string(REPLACE "/" "\\" TARGET_REL_PATH_WIN "${TARGET_REL_PATH}")
+            message(STATUS "[Content Junction] Attempting to create junction point: ${LINK_NAME} -> ${TARGET_REL_PATH_WIN} in ${LINK_PARENT_DIR}")
+            execute_process(COMMAND cmd /c mklink /J "${LINK_NAME}" "${TARGET_REL_PATH_WIN}"
+                            WORKING_DIRECTORY "${LINK_PARENT_DIR}" # 在 build/bin 目录下执行 mklink
+                            RESULT_VARIABLE MKDIR_RESULT
+                            OUTPUT_VARIABLE MKDIR_OUTPUT
+                            ERROR_VARIABLE MKDIR_ERROR)
+        else()
+            # Unix: ln -s <Target> <Link>
+            # 计算相对于链接所在目录的目标路径
+            file(RELATIVE_PATH TARGET_REL_PATH "${LINK_PARENT_DIR}" "${TARGET_DIR}")
+            execute_process(COMMAND ln -s "${TARGET_REL_PATH}" "${LINK_NAME}"
+                            WORKING_DIRECTORY "${LINK_PARENT_DIR}" # 在 build/bin 目录下执行 ln
+                            RESULT_VARIABLE MKDIR_RESULT
+                            OUTPUT_VARIABLE MKDIR_OUTPUT
+                            ERROR_VARIABLE MKDIR_ERROR)
+        endif()
+
+        if(NOT MKDIR_RESULT EQUAL 0)
+            message(WARNING "[Content Link/Junction] Failed to create link/junction '${LINK_PATH}'. Error code: ${MKDIR_RESULT}. Output: ${MKDIR_OUTPUT}. Error: ${MKDIR_ERROR}")
+        else()
+             message(STATUS "[Content Link/Junction] Successfully created link/junction in ${LINK_PARENT_DIR}.")
+        endif()
+    else()
+         message(STATUS "[Content Link/Junction] Link '${LINK_PATH}' already exists. Skipping creation.")
+    endif()
+else()
+    message(WARNING "[Content Link] Source directory ${CMAKE_SOURCE_DIR}/Content not found. Skipping link creation.")
+endif()
+# --- /链接逻辑结束 ---
+
+# --- 在 build/bin 目录创建指向源 Common 目录的链接 ---
+if(EXISTS "${CMAKE_SOURCE_DIR}/Common")
+    set(LINK_PARENT_DIR "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
+    set(LINK_NAME "Common") # <--- 修改: 链接名称为 Common
+    set(TARGET_DIR "${CMAKE_SOURCE_DIR}/Common") # <--- 修改: 目标为源 Common 目录
+    set(LINK_PATH "${LINK_PARENT_DIR}/${LINK_NAME}") # 链接的完整路径 (build/bin/Common)
+
+    # 确保链接所在的目录存在 (bin 目录应该已经由 Content 链接创建)
+    # file(MAKE_DIRECTORY "${LINK_PARENT_DIR}") # 通常不需要再次创建
+
+    # 检查链接是否已存在且有效
+    if(NOT EXISTS "${LINK_PATH}")
+        message(STATUS "[Common Link] Creating link/junction in ${LINK_PARENT_DIR}: ${LINK_NAME} -> ${TARGET_DIR}")
+        if(WIN32)
+            # Windows: mklink /J <Link> <Target>
+            file(RELATIVE_PATH TARGET_REL_PATH "${LINK_PARENT_DIR}" "${TARGET_DIR}")
+            string(REPLACE "/" "\\" TARGET_REL_PATH_WIN "${TARGET_REL_PATH}")
+            message(STATUS "[Common Junction] Attempting to create junction point: ${LINK_NAME} -> ${TARGET_REL_PATH_WIN} in ${LINK_PARENT_DIR}")
+            execute_process(COMMAND cmd /c mklink /J "${LINK_NAME}" "${TARGET_REL_PATH_WIN}"
+                            WORKING_DIRECTORY "${LINK_PARENT_DIR}"
+                            RESULT_VARIABLE MKDIR_RESULT
+                            OUTPUT_VARIABLE MKDIR_OUTPUT
+                            ERROR_VARIABLE MKDIR_ERROR)
+        else()
+            # Unix: ln -s <Target> <Link>
+            file(RELATIVE_PATH TARGET_REL_PATH "${LINK_PARENT_DIR}" "${TARGET_DIR}")
+            execute_process(COMMAND ln -s "${TARGET_REL_PATH}" "${LINK_NAME}"
+                            WORKING_DIRECTORY "${LINK_PARENT_DIR}"
+                            RESULT_VARIABLE MKDIR_RESULT
+                            OUTPUT_VARIABLE MKDIR_OUTPUT
+                            ERROR_VARIABLE MKDIR_ERROR)
+        endif()
+
+        if(NOT MKDIR_RESULT EQUAL 0)
+            message(WARNING "[Common Link/Junction] Failed to create link/junction '${LINK_PATH}'. Error code: ${MKDIR_RESULT}. Output: ${MKDIR_OUTPUT}. Error: ${MKDIR_ERROR}")
+        else()
+             message(STATUS "[Common Link/Junction] Successfully created link/junction in ${LINK_PARENT_DIR}.")
+        endif()
+    else()
+         message(STATUS "[Common Link/Junction] Link '${LINK_PATH}' already exists. Skipping creation.")
+    endif()
+else()
+    message(WARNING "[Common Link] Source directory ${CMAKE_SOURCE_DIR}/Common not found. Skipping link creation.")
+endif()
+# --- /链接逻辑结束 ---
 
 # --- 查找依赖项 ---
 # 使用 pkg-config 帮助查找库
@@ -35,7 +129,7 @@ endif()
 
 # GLFW (窗口和输入库)
 # 需要确保 MSYS2 中安装的是 mingw-w64-x86_64-glfw
-# GLFW 的 CMake 配置文件通常能正确处理链接
+# Revert to basic find_package, hoping it defines GLFW_LIBRARIES
 find_package(glfw3 REQUIRED)
 
 # GLM (OpenGL Mathematics) - 通常是头文件库
@@ -86,9 +180,76 @@ find_package(Fontconfig REQUIRED)
 # 添加核心库和 ImGui
 add_subdirectory(src/common)
 add_subdirectory(src/imgui)
+add_subdirectory(src/DemoLITION)
 
-# 添加第一个教程
+# 在添加 freetype-gl 子目录之前设置选项，禁用文档、示例和测试构建
+set(freetype-gl_BUILD_APIDOC OFF CACHE BOOL "Disable freetype-gl documentation build" FORCE)
+set(freetype-gl_BUILD_DEMOS OFF CACHE BOOL "Disable freetype-gl demo build" FORCE)
+set(freetype-gl_BUILD_TESTS OFF CACHE BOOL "Disable freetype-gl test build" FORCE)
+add_subdirectory(src/freetype-gl)
+
 add_subdirectory(src/Tutorial01)
+add_subdirectory(src/Tutorial02)
+add_subdirectory(src/Tutorial03)
+add_subdirectory(src/Tutorial04)
+add_subdirectory(src/Tutorial05)
+add_subdirectory(src/Tutorial06)
+add_subdirectory(src/Tutorial07)
+add_subdirectory(src/Tutorial08)
+add_subdirectory(src/Tutorial09)
+add_subdirectory(src/Tutorial10)
+add_subdirectory(src/Tutorial11)
+add_subdirectory(src/Tutorial12)
+add_subdirectory(src/Tutorial13)
+add_subdirectory(src/Tutorial14)
+add_subdirectory(src/Tutorial15)
+add_subdirectory(src/Tutorial16)
+add_subdirectory(src/Tutorial17)
+add_subdirectory(src/Tutorial18)
+add_subdirectory(src/Tutorial19)
+add_subdirectory(src/Tutorial20)
+add_subdirectory(src/Tutorial21)
+add_subdirectory(src/Tutorial22)
+add_subdirectory(src/Tutorial23)
+add_subdirectory(src/Tutorial24)
+add_subdirectory(src/Tutorial25)
+add_subdirectory(src/Tutorial25_assimp_sandbox)
+add_subdirectory(src/Tutorial26)
+add_subdirectory(src/Tutorial27)
+add_subdirectory(src/Tutorial28)
+add_subdirectory(src/Tutorial28_Particles)
+add_subdirectory(src/Tutorial29)
+add_subdirectory(src/Tutorial30)
+add_subdirectory(src/Tutorial31)
+add_subdirectory(src/Tutorial32)
+add_subdirectory(src/Tutorial33)
+add_subdirectory(src/Tutorial34)
+add_subdirectory(src/Tutorial35)
+add_subdirectory(src/Tutorial36)
+add_subdirectory(src/Tutorial37)
+add_subdirectory(src/Tutorial38)
+add_subdirectory(src/Tutorial39)
+add_subdirectory(src/Tutorial40)
+add_subdirectory(src/Tutorial41)
+add_subdirectory(src/Tutorial42)
+add_subdirectory(src/Tutorial43)
+add_subdirectory(src/Tutorial44)
+add_subdirectory(src/Tutorial45)
+add_subdirectory(src/Tutorial45_demo1)
+add_subdirectory(src/Tutorial46_FreetypeGL)
+add_subdirectory(src/Tutorial47_2DTess)
+add_subdirectory(src/Tutorial48_MeshOptimizer)
+add_subdirectory(src/Tutorial49_WireframeOnMesh)
+add_subdirectory(src/Tutorial50_DSA)
+add_subdirectory(src/Tutorial51_QuadTess)
+add_subdirectory(src/Tutorial52_NormalMapping)
+add_subdirectory(src/Tutorial54_EndlessGrid)
+add_subdirectory(src/Tutorial55_GLMCamera)
+add_subdirectory(src/Tutorial56_Cubemaps)
+add_subdirectory(src/Tutorial57_ComputeShaderParticles)
+add_subdirectory(src/Tutorial58_DrawIndirect)
+add_subdirectory(src/Tutorial59_BindlessTextures)
+add_subdirectory(src/Tutorial60_RefRefract)
 
 # 暂时注释掉动态添加其他教程的部分
 # file(GLOB TUTORIAL_DIRS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "src/Tutorial*")

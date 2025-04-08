@@ -21,7 +21,7 @@
 #endif
 #include <stdio.h>
 #include <GL/glew.h>
-#define GLFW_DLL
+// #define GLFW_DLL // Let CMake handle this based on linked library type
 #include <GLFW/glfw3.h>
 
 #include "ogldev_util.h"

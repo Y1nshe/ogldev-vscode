@@ -9,10 +9,10 @@
       // ${workspaceFolder} 指向项目根目录
       // 我们构建的可执行文件位于 build/bin/ 下
       // ${fileDirnameBasename} 获取当前文件所在目录名 (例如 Tutorial01)
-      "program": "${workspaceFolder}/build/bin/${fileDirnameBasename}.exe",
+      "program": "${fileDirnameBasename}.exe",
       "args": [], // 如果程序需要命令行参数，在这里添加
       "stopAtEntry": false, // 是否在 main 函数入口处停止
-      "cwd": "${workspaceFolder}/build/bin", // 设置工作目录为可执行文件所在目录
+      "cwd": "${workspaceFolder}/build/bin/${fileDirnameBasename}", // 设置工作目录为可执行文件所在目录
       // 关键：设置环境变量，将 MINGW64 的 bin 目录添加到 PATH
       // 这样程序运行时才能找到所需的 MINGW64 DLLs
       "environment": [

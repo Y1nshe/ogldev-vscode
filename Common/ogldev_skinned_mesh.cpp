@@ -16,10 +16,12 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <limits>
+#include <stdio.h>
+#include "meshoptimizer.h"
 #include "ogldev_engine_common.h"
 #include "ogldev_skinned_mesh.h"
-
-#include "3rdparty/meshoptimizer/src/meshoptimizer.h"
+#include "ogldev_basic_lighting.h"
 
 using namespace std;
 
@@ -114,7 +116,7 @@ void SkinnedMesh::InitSingleMeshOpt(uint MeshIndex, const aiMesh* paiMesh)
     }
 
     m_Meshes[MeshIndex].BaseVertex = (uint)m_SkinnedVertices.size();
-    m_Meshes[MeshIndex].BaseIndex = (uint)m_Indices.size();    
+    m_Meshes[MeshIndex].BaseIndex = (uint)m_Indices.size();
 
     int NumIndices = paiMesh->mNumFaces * 3;
 

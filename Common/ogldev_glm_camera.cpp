@@ -22,10 +22,13 @@
 #include <GLFW/glfw3.h>
 
 #include "ogldev_glm_camera.h"
+#include "ogldev_util.h"
+#include <stdio.h> // For printf
 
 GLMCameraFirstPerson::GLMCameraFirstPerson(const glm::vec3& Pos, const glm::vec3& Target,
 										   const glm::vec3& Up, PersProjInfo& persProjInfo)
 {
+	printf("[DEBUG] GLMCameraFirstPerson constructor(params) called. this=%p\n", this);
 	Init(Pos, Target, Up, persProjInfo);
 }
 
@@ -33,10 +36,13 @@ GLMCameraFirstPerson::GLMCameraFirstPerson(const glm::vec3& Pos, const glm::vec3
 void GLMCameraFirstPerson::Init(const glm::vec3& Pos, const glm::vec3& Target,
 								const glm::vec3& Up, PersProjInfo& persProjInfo)
 {
-	m_cameraPos = Pos;
-	m_up = Up;
+	printf("[DEBUG] GLMCameraFirstPerson::Init called. this=%p, Width=%u, Height=%u\n",
+		   this, persProjInfo.Width, persProjInfo.Height);
 	m_persProjInfo = persProjInfo;
-	
+	m_cameraPos = Pos;
+	SetTarget(Target);
+	m_up = Up;
+
 	float ar = (float)persProjInfo.Width / (float)persProjInfo.Height;
 
 	if (CAMERA_LEFT_HANDED) {
@@ -58,7 +64,7 @@ void GLMCameraFirstPerson::Init(const glm::vec3& Pos, const glm::vec3& Target,
 		m_persProjection = glm::perspectiveRH(glm::radians(persProjInfo.FOV), ar,
 			                                  persProjInfo.zNear, persProjInfo.zFar);
 #endif
-	}	
+	}
 
 
 #ifdef OGLDEV_VULKAN
@@ -84,6 +90,15 @@ void GLMCameraFirstPerson::Update(float dt)
 
 void GLMCameraFirstPerson::SetMousePos(float x, float y)
 {
+	printf("[DEBUG] GLMCameraFirstPerson::SetMousePos called. this=%p, x=%.2f, y=%.2f, m_persProjInfo.Width=%u\n",
+		   this, x, y, m_persProjInfo.Width);
+	if (m_persProjInfo.Width == 0) {
+		printf("[ERROR] GLMCameraFirstPerson::SetMousePos - m_persProjInfo.Width is ZERO!\n");
+		// Optionally, add a return or default behavior here to prevent the crash
+		// m_mouseState.m_pos.x = 0.5f; // Example default
+		// m_mouseState.m_pos.y = 0.5f; // Example default
+		// return;
+	}
 	m_mouseState.m_pos.x = x / (float)m_persProjInfo.Width;
 	m_mouseState.m_pos.y = y / (float)m_persProjInfo.Height;
 }
@@ -101,7 +116,7 @@ void GLMCameraFirstPerson::CalcCameraOrientation()
 {
 	glm::vec2 DeltaMouse = m_mouseState.m_pos - m_oldMousePos;
 
-	glm::quat DeltaQuat = glm::quat(glm::vec3(m_mouseSpeed * DeltaMouse.y, 
+	glm::quat DeltaQuat = glm::quat(glm::vec3(m_mouseSpeed * DeltaMouse.y,
 		                                      m_mouseSpeed * DeltaMouse.x, 0.0f));
 
 	m_cameraOrientation = glm::normalize(DeltaQuat * m_cameraOrientation);
@@ -144,26 +159,26 @@ glm::vec3 GLMCameraFirstPerson::CalcAcceleration()
 		Forward = -glm::vec3(v[0][2], v[1][2], v[2][2]);
 		Up = glm::cross(Right, Forward);
 	}
-	
+
 	glm::vec3 Acceleration = glm::vec3(0.0f);
 
-	if (m_movement.Forward) { 
-		Acceleration += Forward; 
+	if (m_movement.Forward) {
+		Acceleration += Forward;
 	}
 
-	if (m_movement.Backward) { 
-		Acceleration += -Forward; 
+	if (m_movement.Backward) {
+		Acceleration += -Forward;
 	}
 
-	if (m_movement.StrafeLeft) { 
-		Acceleration += -Right; 
+	if (m_movement.StrafeLeft) {
+		Acceleration += -Right;
 	}
 
-	if (m_movement.StrafeRight) { 
-		Acceleration += Right; 
+	if (m_movement.StrafeRight) {
+		Acceleration += Right;
 	}
 
-	if (m_movement.Up) { 
+	if (m_movement.Up) {
 #ifdef OGLDEV_VULKAN	// Hack due to reversed Y in Vulkan
 		Acceleration -= Up;
 #else
@@ -171,7 +186,7 @@ glm::vec3 GLMCameraFirstPerson::CalcAcceleration()
 #endif
 	}
 
-	if (m_movement.Down) { 
+	if (m_movement.Down) {
 #ifdef OGLDEV_VULKAN    // Hack due to reversed Y in Vulkan
 		Acceleration += Up;
 #else
@@ -179,8 +194,8 @@ glm::vec3 GLMCameraFirstPerson::CalcAcceleration()
 #endif
 	}
 
-	if (m_movement.FastSpeed) { 
-		Acceleration *= m_fastCoef; 
+	if (m_movement.FastSpeed) {
+		Acceleration *= m_fastCoef;
 	}
 
 	if (m_movement.Plus) {

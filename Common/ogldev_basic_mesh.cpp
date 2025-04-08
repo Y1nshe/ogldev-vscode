@@ -16,10 +16,11 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include "ogldev_util.h"
 #include "ogldev_basic_mesh.h"
+#include "ogldev_types.h"
+#include "meshoptimizer.h"
 #include "ogldev_engine_common.h"
-
-#include "3rdparty/meshoptimizer/src/meshoptimizer.h"
 
 using namespace std;
 
@@ -264,7 +265,7 @@ void BasicMesh::OptimizeMesh(int MeshIndex, std::vector<uint>&Indices, std::vect
     OptIndices.resize(NumIndices);
     OptVertices.resize(OptVertexCount);
 
-    // Optimization #1: remove duplicate vertices    
+    // Optimization #1: remove duplicate vertices
     meshopt_remapIndexBuffer(OptIndices.data(), Indices.data(), NumIndices, remap.data());
 
     meshopt_remapVertexBuffer(OptVertices.data(), Vertices.data(), NumVertices, sizeof(Vertex), remap.data());
@@ -281,7 +282,7 @@ void BasicMesh::OptimizeMesh(int MeshIndex, std::vector<uint>&Indices, std::vect
     // Optimization #5: create a simplified version of the model
     float Threshold = 1.0f;
     size_t TargetIndexCount = (size_t)(NumIndices * Threshold);
-    
+
     float TargetError = 0.0f;
     std::vector<unsigned int> SimplifiedIndices(OptIndices.size());
     size_t OptIndexCount = meshopt_simplify(SimplifiedIndices.data(), OptIndices.data(), NumIndices,
@@ -295,7 +296,7 @@ void BasicMesh::OptimizeMesh(int MeshIndex, std::vector<uint>&Indices, std::vect
     //printf("Target num indices %d\n", TargetIndexCount);
     printf("Optimized number of indices %d\n", opt_indices);
     SimplifiedIndices.resize(OptIndexCount);
-    
+
     // Concatenate the local arrays into the class attributes arrays
     m_Indices.insert(m_Indices.end(), SimplifiedIndices.begin(), SimplifiedIndices.end());
 
@@ -629,7 +630,7 @@ void BasicMesh::PopulateBuffersNonDSA()
 
     glBufferData(GL_ARRAY_BUFFER, sizeof(m_Vertices[0]) * m_Vertices.size(), &m_Vertices[0], GL_STATIC_DRAW);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(m_Indices[0]) * m_Indices.size(), &m_Indices[0], GL_STATIC_DRAW);
-    
+
     size_t NumFloats = 0;
 
     glEnableVertexAttribArray(POSITION_LOCATION);
