@@ -93,7 +93,7 @@ bool ForwardLightingTechnique::InitCommon()
     GET_UNIFORM_AND_CHECK(PBRMaterialLoc.Color, "gPBRmaterial.Color");
     GET_UNIFORM_AND_CHECK(PBRMaterialLoc.IsAlbedo, "gPBRmaterial.IsAlbedo");
     LightingEnabledLoc = GetUniformLocation("gLightingEnabled");
-    
+
    // GET_UNIFORM_AND_CHECK(HeightMapLoc, "gHeightMap");
     //GET_UNIFORM_AND_CHECK(HasHeightMapLoc, "gHasHeightMap");
     GET_UNIFORM_AND_CHECK(ShadowsEnabledLoc, "gShadowsEnabled");
@@ -393,7 +393,7 @@ void ForwardLightingTechnique::SetPointLights(unsigned int NumLights, const Poin
         glUniform1f(PointLightsLocation[i].Atten.Constant, pLights[i].Attenuation.Constant);
         glUniform1f(PointLightsLocation[i].Atten.Linear, pLights[i].Attenuation.Linear);
         // TODO: assimp puts a very small fraction here leading to burnout of the image
-        glUniform1f(PointLightsLocation[i].Atten.Exp, pLights[i].Attenuation.Exp * 2000.0f); 
+        glUniform1f(PointLightsLocation[i].Atten.Exp, pLights[i].Attenuation.Exp * 2000.0f);
     }
 
     if (WithPos) {

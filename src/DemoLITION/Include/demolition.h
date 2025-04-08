@@ -1,6 +1,6 @@
 /*
 
-        Copyright 2023 Etay Meiri
+        Copyright 2024 Etay Meiri
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -14,21 +14,11 @@
 
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-    DemoLITION - Forward Renderer Demo
 */
 
-#include "demolition.h"
 
+#pragma once
 
-#define WINDOW_WIDTH  1000
-#define WINDOW_HEIGHT 1000
-
-
-void test_minimal()
-{
-    bool LoadBasicShapes = false;
-    RenderingSystem* pRenderingSystem = RenderingSystem::CreateRenderingSystem(RENDERING_SYSTEM_GL, NULL, LoadBasicShapes);
-    pRenderingSystem->CreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Minimal Test");
-    pRenderingSystem->Execute();
-}
+#include "demolition_model.h"
+#include "demolition_rendering_system.h"
+#include "demolition_scene.h"

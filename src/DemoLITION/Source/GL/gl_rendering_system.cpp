@@ -256,6 +256,11 @@ void RenderingSystemGL::OnKeyCallback(GLFWwindow* pWindow, int key, int scancode
 
 void RenderingSystemGL::OnCursorPosCallback(GLFWwindow* pWindow, double x, double y)
 {
+    if (!m_pCamera) {
+        printf("[WARN] RenderingSystemGL::OnCursorPosCallback - m_pCamera is NULL, skipping mouse update.\n");
+        return;
+    }
+
     bool HandledByGame = m_pGameCallbacks->OnMouseMove((int)x, (int)y);
 
     int WindowWidth, WindowHeight;

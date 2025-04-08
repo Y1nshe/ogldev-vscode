@@ -18,7 +18,7 @@
 
 #include "Int/core_rendering_system.h"
 #include "Int/core_model.h"
-#include "3rdparty/meshoptimizer/src/meshoptimizer.h"
+#include "meshoptimizer.h"
 
 using namespace std;
 
@@ -90,7 +90,7 @@ bool CoreModel::InitFromScene(const aiScene* pScene, const string& Filename)
 {
     if (!InitGeometry(pScene, Filename)) {
         return false;
-    }    
+    }
 
     InitCameras(pScene);
 
@@ -125,7 +125,7 @@ bool CoreModel::InitGeometry(const aiScene* pScene, const string& Filename)
 
     if (!InitMaterials(pScene, Filename)) {
         return false;
-    }    
+    }
 
     CalculateMeshTransformations(pScene);
 
@@ -189,7 +189,7 @@ void CoreModel::ReserveSpace(std::vector<VertexType>& Vertices, unsigned int Num
     Vertices.reserve(NumVertices);
     m_Indices.reserve(NumIndices);
     //m_Bones.resize(NumVertices); // TODO: only if there are any bones
-    InitializeRequiredNodeMap(m_pScene->mRootNode);	
+    InitializeRequiredNodeMap(m_pScene->mRootNode);
 }
 
 
@@ -227,7 +227,7 @@ void CoreModel::TraverseNodeHierarchy(Matrix4f ParentTransformation, aiNode* pNo
 
     printf("Combined transformation:\n");
     CombinedTransformation.Print();
-    
+
     if (pNode->mNumMeshes > 0) {
         printf("Num meshes: %d - ", pNode->mNumMeshes);
         for (int i = 0; i < (int)pNode->mNumMeshes; i++) {
@@ -258,7 +258,7 @@ void CoreModel::InitSingleMesh(vector<VertexType>& Vertices, uint MeshIndex, con
     VertexType v;
 
     for (unsigned int i = 0 ; i < paiMesh->mNumVertices ; i++) {
-        const aiVector3D& Pos = paiMesh->mVertices[i];       
+        const aiVector3D& Pos = paiMesh->mVertices[i];
         v.Position = Vector3f(Pos.x, Pos.y, Pos.z);
 
         m_minPos.x = std::min(m_minPos.x, v.Position.x);
@@ -318,7 +318,7 @@ void CoreModel::InitSingleMesh(vector<VertexType>& Vertices, uint MeshIndex, con
 
     if constexpr (std::is_same_v<VertexType, SkinnedVertex>) {
         LoadMeshBones(Vertices, MeshIndex, paiMesh);
-    }  
+    }
 }
 
 
@@ -361,12 +361,12 @@ void CoreModel::InitSingleMeshOpt(vector<VertexType>& AllVertices, uint MeshInde
 
         const aiVector3D& pBitangent = paiMesh->mBitangents[i];
         v.Bitangent = Vector3f(pBitangent.x, pBitangent.y, pBitangent.z);
-		
+
      /*   printf("Pos %d: ", i); v.Position.Print();
         printf("Normal: "); v.Normal.Print();
         printf("Tangent: "); v.Tangent.Print();
         printf("Bitangent: "); v.Bitangent.Print();*/
-	
+
 
         Vertices[i] = v;
     }
@@ -421,7 +421,7 @@ void CoreModel::OptimizeMesh(int MeshIndex, std::vector<uint>&Indices, std::vect
     OptIndices.resize(NumIndices);
     OptVertices.resize(OptVertexCount);
 
-    // Optimization #1: remove duplicate vertices    
+    // Optimization #1: remove duplicate vertices
     meshopt_remapIndexBuffer(OptIndices.data(), Indices.data(), NumIndices, remap.data());
 
     meshopt_remapVertexBuffer(OptVertices.data(), Vertices.data(), NumVertices, sizeof(VertexType), remap.data());
@@ -438,7 +438,7 @@ void CoreModel::OptimizeMesh(int MeshIndex, std::vector<uint>&Indices, std::vect
     // Optimization #5: create a simplified version of the model
     float Threshold = 1.0f;
     size_t TargetIndexCount = (size_t)(NumIndices * Threshold);
-    
+
     float TargetError = 0.0f;
     std::vector<unsigned int> SimplifiedIndices(OptIndices.size());
     size_t OptIndexCount = meshopt_simplify(SimplifiedIndices.data(), OptIndices.data(), NumIndices,
@@ -452,7 +452,7 @@ void CoreModel::OptimizeMesh(int MeshIndex, std::vector<uint>&Indices, std::vect
     //printf("Target num indices %d\n", TargetIndexCount);
     printf("Optimized number of indices %d\n", opt_indices);
     SimplifiedIndices.resize(OptIndexCount);
-    
+
     // Concatenate the local arrays into the class attributes arrays
     m_Indices.insert(m_Indices.end(), SimplifiedIndices.begin(), SimplifiedIndices.end());
 
@@ -583,7 +583,7 @@ void CoreModel::LoadDiffuseTexture(const string& Dir, const aiMaterial* pMateria
             printf("Loading default texture\n");
             s_pMissingTexture = AllocTexture2D();
 #ifdef OGLDEV_VULKAN   // hack due to different local dirs
-            s_pMissingTexture->Load("../../Content/Textures/no_texture.png");            
+            s_pMissingTexture->Load("../../Content/Textures/no_texture.png");
 #else
             s_pMissingTexture->Load("../Content/Textures/no_texture.png");
 #endif
@@ -817,7 +817,7 @@ static void traverse(int depth, aiNode* pNode)
     printf("%s\n", pNode->mName.C_Str());
 
     Matrix4f NodeTransformation(pNode->mTransformation);
-    NodeTransformation.Print(); 
+    NodeTransformation.Print();
 
     for (uint i = 0; i < pNode->mNumChildren; i++) {
         traverse(depth + 1, pNode->mChildren[i]);
@@ -902,7 +902,7 @@ void CoreModel::InitSingleCamera(int Index, const aiScene* pScene)
 
 
 void CoreModel::InitLights(const aiScene* pScene)
-{   
+{
     printf("\n*** Initializing lights ***\n");
 
     for (int i = 0; i < (int)pScene->mNumLights; i++) {
@@ -950,11 +950,11 @@ static bool GetFullTransformation(const aiNode* pRootNode, const char* pName, Ma
     Transformation.InitIdentity();
 
     const aiNode* pNode = pRootNode->FindNode(pName);
-    
+
     if (!pNode) {
         printf("Warning! Cannot find a node for '%s'\n", pName);
         return false;
-    }    
+    }
 
     while (pNode) {
         Matrix4f NodeTransformation(pNode->mTransformation);
