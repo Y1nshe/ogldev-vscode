@@ -43,12 +43,12 @@ char* ReadBinaryFile(const char* pFileName, int& size);
 
 void WriteBinaryFile(const char* pFilename, const void* pData, int size);
 
-void OgldevError(const char* pFileName, uint line, const char* msg, ... );
-void OgldevFileError(const char* pFileName, uint line, const char* pFileError);
+void OgldevError(const char* pFile, uint line, const char* msg, ...);
+void OgldevFileError(const char* pFile, uint line, const char* pFilename);
 
-#define OGLDEV_ERROR0(msg) OgldevError(__FILE__, __LINE__, msg)
-#define OGLDEV_ERROR(msg, ...) OgldevError(__FILE__, __LINE__, msg, __VA_ARGS__)
-#define OGLDEV_FILE_ERROR(FileError) OgldevFileError(__FILE__, __LINE__, FileError);
+#define OGLDEV_ERROR0(msg) OgldevError(__FILE__, __LINE__, msg);
+#define OGLDEV_ERROR(msg, ...) OgldevError(__FILE__, __LINE__, msg, ##__VA_ARGS__)
+#define OGLDEV_FILE_ERROR(File) OgldevFileError(__FILE__, __LINE__, File);
 
 #define ZERO_MEM(a) memset(a, 0, sizeof(a))
 #define ZERO_MEM_VAR(var) memset(&var, 0, sizeof(var))
