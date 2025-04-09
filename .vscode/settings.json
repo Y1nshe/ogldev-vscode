@@ -1,17 +1,17 @@
 {
     "terminal.integrated.profiles.windows": {
         "MSYS2 MINGW64": {
-            "path": "C:\\msys64\\msys2_shell.cmd",
+            "path": "${env:MSYS64_ROOT}\\msys2_shell.cmd",
             "args": ["-defterm", "-no-start", "-mingw64", "-here"],
             "icon": "terminal-bash"
         }
     },
     "terminal.integrated.defaultProfile.windows": "MSYS2 MINGW64",
     "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
-    "C_Cpp.default.compilerPath": "C:\\msys64\\mingw64\\bin\\g++.exe",
+    "C_Cpp.default.compilerPath": "${env:MSYS64_ROOT}\\mingw64\\bin\\g++.exe",
     "C_Cpp.default.includePath": [
         "${workspaceFolder}/**",
-        "C:\\msys64\\mingw64\\include"
+        "${env:MSYS64_ROOT}\\mingw64\\include"
     ],
     "C_Cpp.default.cppStandard": "c++17",
     "C_Cpp.default.intelliSenseMode": "windows-gcc-x64",
@@ -21,7 +21,7 @@
         "-DCMAKE_BUILD_TYPE=Debug"
     ],
     "cmake.configureEnvironment": {
-        "CMAKE_PREFIX_PATH": "C:/msys64/mingw64"
+        "CMAKE_PREFIX_PATH": "${env:MSYS64_ROOT}\\mingw64"
     },
     "cmake.preferredKits": [
         "GCC 14.2.0 x86_64-w64-mingw32 (mingw64)"

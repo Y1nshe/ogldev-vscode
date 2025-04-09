@@ -10,7 +10,7 @@
         // cwd 仍然是 build 目录，msys2_shell -here 会在这里执行
         "cwd": "${workspaceFolder}/build",
         "shell": {
-            "executable": "C:\\msys64\\msys2_shell.cmd",
+            "executable": "${env:MSYS64_ROOT}\\msys2_shell.cmd",
             "args": [
                 "-mingw64", // 指定 MINGW64 环境
                 "-no-start", // 不需要启动新的交互式 shell 窗口
@@ -35,7 +35,7 @@
       "label": "Configure Project (CMake + Ninja)",
       "type": "shell",
       // 使用 msys2_shell.cmd 启动 MINGW64 环境并执行 cmake
-      "command": "C:/msys64/msys2_shell.cmd",
+      "command": "${env:MSYS64_ROOT}\\msys2_shell.cmd",
       "args": [
         "-mingw64",
         "-no-start",

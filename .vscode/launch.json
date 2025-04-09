@@ -13,32 +13,12 @@
       "args": [], // 如果程序需要命令行参数，在这里添加
       "stopAtEntry": false, // 是否在 main 函数入口处停止
       "cwd": "${workspaceFolder}/build/bin/${fileDirnameBasename}", // 设置工作目录为可执行文件所在目录
-      // 关键：设置环境变量，将 MINGW64 的 bin 目录添加到 PATH
-      // 这样程序运行时才能找到所需的 MINGW64 DLLs
-      "environment": [
-        {
-          // 在 Windows 上，PATH 通常是这样设置的
-          // 将 MINGW64 bin 目录添加到现有 PATH 的开头
-          // （请根据你的 MSYS2 安装路径修改）
-          "name": "Path",
-          "value": "C:/msys64/mingw64/bin;${env:Path}"
-        },
-        {
-          "name": "MSYSTEM",
-          "value": "MINGW64"
-        },
-        {
-           // Optional, might not be needed by the running program
-          "name": "MSYSTEM_PREFIX",
-          "value": "/mingw64"
-        }
-      ],
       "externalConsole": false, // Use an external console instead of integrated one
       "MIMode": "gdb",
       // --- Pipe Transport Configuration ---
       "pipeTransport": {
         "pipeCwd": "${workspaceFolder}", // Working directory for the pipe program
-        "pipeProgram": "C:/msys64/msys2_shell.cmd", // The program to launch GDB
+        "pipeProgram": "${env:MSYS64_ROOT}/msys2_shell.cmd", // The program to launch GDB
         "pipeArgs": [                  // Arguments for pipeProgram
           "-mingw64",
           "-no-start",
@@ -50,7 +30,7 @@
           "gdb --interpreter=mi"
         ],
         // Path to the actual debugger executable *within the target environment*
-        "debuggerPath": "/mingw64/bin/gdb.exe", // Use MSYS-style path here maybe?
+        // "debuggerPath": "/mingw64/bin/gdb.exe", // Use MSYS-style path here maybe?
         // For debugging the pipe connection itself:
         //"logging": { "engineLogging": true }
       },
