@@ -70,7 +70,7 @@
 
 1.  **克隆仓库**:
     ```bash
-    git clone https://github.com/your-username/ogldev.git # 请替换为实际的仓库地址
+    git clone https://github.com/Y1nshe/ogldev-vscode.git
     cd ogldev
     ```
 
