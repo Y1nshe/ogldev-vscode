@@ -63,24 +63,24 @@ else()
 endif()
 # --- /链接逻辑结束 ---
 
-# --- 在 build/bin 目录创建指向源 Common 目录的链接 ---
-if(EXISTS "${CMAKE_SOURCE_DIR}/Common")
-    set(LINK_PARENT_DIR "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
-    set(LINK_NAME "Common") # <--- 修改: 链接名称为 Common
-    set(TARGET_DIR "${CMAKE_SOURCE_DIR}/Common") # <--- 修改: 目标为源 Common 目录
-    set(LINK_PATH "${LINK_PARENT_DIR}/${LINK_NAME}") # 链接的完整路径 (build/bin/Common)
+# --- 在 build/bin/common 目录创建指向源 Shaders 目录的链接 ---
+if(EXISTS "${CMAKE_SOURCE_DIR}/src/common/Shaders")
+    set(LINK_PARENT_DIR "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/common")
+    set(LINK_NAME "Shaders") # 链接名称
+    set(TARGET_DIR "${CMAKE_SOURCE_DIR}/src/common/Shaders") # 目标为源 Shaders 目录
+    set(LINK_PATH "${LINK_PARENT_DIR}/${LINK_NAME}") # 链接的完整路径 (build/bin/common/Shaders)
 
-    # 确保链接所在的目录存在 (bin 目录应该已经由 Content 链接创建)
-    # file(MAKE_DIRECTORY "${LINK_PARENT_DIR}") # 通常不需要再次创建
+    # 确保链接所在的目录存在
+    file(MAKE_DIRECTORY "${LINK_PARENT_DIR}")
 
     # 检查链接是否已存在且有效
     if(NOT EXISTS "${LINK_PATH}")
-        message(STATUS "[Common Link] Creating link/junction in ${LINK_PARENT_DIR}: ${LINK_NAME} -> ${TARGET_DIR}")
+        message(STATUS "[Shaders Link] Creating link/junction in ${LINK_PARENT_DIR}: ${LINK_NAME} -> ${TARGET_DIR}")
         if(WIN32)
             # Windows: mklink /J <Link> <Target>
             file(RELATIVE_PATH TARGET_REL_PATH "${LINK_PARENT_DIR}" "${TARGET_DIR}")
-            string(REPLACE "/" "\\" TARGET_REL_PATH_WIN "${TARGET_REL_PATH}")
-            message(STATUS "[Common Junction] Attempting to create junction point: ${LINK_NAME} -> ${TARGET_REL_PATH_WIN} in ${LINK_PARENT_DIR}")
+            string(REPLACE "/" "\\" TARGET_REL_PATH_WIN "${TARGET_REL_PATH}") # Ensure backslashes are escaped for CMake string
+            message(STATUS "[Shaders Junction] Attempting to create junction point: ${LINK_NAME} -> ${TARGET_REL_PATH_WIN} in ${LINK_PARENT_DIR}")
             execute_process(COMMAND cmd /c mklink /J "${LINK_NAME}" "${TARGET_REL_PATH_WIN}"
                             WORKING_DIRECTORY "${LINK_PARENT_DIR}"
                             RESULT_VARIABLE MKDIR_RESULT
@@ -97,15 +97,15 @@ if(EXISTS "${CMAKE_SOURCE_DIR}/Common")
         endif()
 
         if(NOT MKDIR_RESULT EQUAL 0)
-            message(WARNING "[Common Link/Junction] Failed to create link/junction '${LINK_PATH}'. Error code: ${MKDIR_RESULT}. Output: ${MKDIR_OUTPUT}. Error: ${MKDIR_ERROR}")
+            message(WARNING "[Shaders Link/Junction] Failed to create link/junction '${LINK_PATH}'. Error code: ${MKDIR_RESULT}. Output: ${MKDIR_OUTPUT}. Error: ${MKDIR_ERROR}")
         else()
-             message(STATUS "[Common Link/Junction] Successfully created link/junction in ${LINK_PARENT_DIR}.")
+             message(STATUS "[Shaders Link/Junction] Successfully created link/junction in ${LINK_PARENT_DIR}.")
         endif()
     else()
-         message(STATUS "[Common Link/Junction] Link '${LINK_PATH}' already exists. Skipping creation.")
+         message(STATUS "[Shaders Link/Junction] Link '${LINK_PATH}' already exists. Skipping creation.")
     endif()
 else()
-    message(WARNING "[Common Link] Source directory ${CMAKE_SOURCE_DIR}/Common not found. Skipping link creation.")
+    message(WARNING "[Shaders Link] Source directory ${CMAKE_SOURCE_DIR}/src/common/Shaders not found. Skipping link creation.")
 endif()
 # --- /链接逻辑结束 ---
 

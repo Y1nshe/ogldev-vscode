@@ -15,24 +15,20 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "water_technique.h"
+#include "Techniques/ogldev_square_vs.h"
 
 
-WaterTechnique::WaterTechnique()
+SquareVSTechnique::SquareVSTechnique()
 {
 }
 
-bool WaterTechnique::Init()
+bool SquareVSTechnique::Init()
 {
     if (!Technique::Init()) {
         return false;
     }
 
-    if (!AddShader(GL_VERTEX_SHADER, "Shaders/square.vs")) {
-        return false;
-    }
-
-    if (!AddShader(GL_FRAGMENT_SHADER, "water.fs")) {
+    if (!AddShader(GL_VERTEX_SHADER, "../common/Shaders/square.vs")) {
         return false;
     }
 
@@ -41,20 +37,14 @@ bool WaterTechnique::Init()
     }
 
     GET_UNIFORM_AND_CHECK(m_WVPLoc, "gWVP");
-    GET_UNIFORM_AND_CHECK(m_timeLoc, "iTime");
 
     return true;
 }
 
 
-void WaterTechnique::Render(const Matrix4f& WVP, float Time)
+void SquareVSTechnique::SetWVP(const Matrix4f& WVP)
 {
-    Enable();
-
     glUniformMatrix4fv(m_WVPLoc, 1, GL_TRUE, (const GLfloat*)WVP.m);
-    glUniform1f(m_timeLoc, Time);
-
-    glDrawArraysInstancedBaseInstance(GL_TRIANGLES, 0, 6, 1, 0);
 }
 
 

@@ -34,7 +34,7 @@ bool ShadowMappingTechnique::Init()
         return false;
     }
 
-    if (!AddShader(GL_FRAGMENT_SHADER, "../Common/Shaders/empty.fs")) {
+    if (!AddShader(GL_FRAGMENT_SHADER, "Shaders/empty.fs")) {
         return false;
     }
 

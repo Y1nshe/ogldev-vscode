@@ -41,6 +41,9 @@ GLuint ShaderProgram;
 
 // --- 输入状态 ---
 bool keyStates[256] = {false}; // 跟踪按键状态的数组
+bool middleMouseButtonDown = false; // 跟踪鼠标中键状态
+int lastMouseX = 0;
+int lastMouseY = 0;
 // -------------------
 
 // 相机参数
@@ -51,6 +54,7 @@ float cameraPitch = 0.0f; // 俯仰角 (绕X轴)
 float cameraRoll = 0.0f;  // 翻滚角 (绕Z轴)
 float CameraSpeed = 0.1f;  // 相机移动速度
 float CameraRotateSpeed = 0.2f; // 相机旋转速度 (角度制)
+float MouseSensitivity = 0.1f; // 鼠标旋转灵敏度
 
 // --- 辅助函数：渲染文本 ---
 void RenderText(float x, float y, void* font, const std::string& text, const Vector3f& color)
@@ -89,6 +93,46 @@ static void KeyboardUpCB(unsigned char key, int mouse_x, int mouse_y)
     keyStates[key] = false; // 标记按键为释放
 }
 // ---------------------
+
+// --- 鼠标回调函数 ---
+static void MouseCB(int button, int state, int x, int y)
+{
+    if (button == GLUT_MIDDLE_BUTTON) {
+        if (state == GLUT_DOWN) {
+            middleMouseButtonDown = true;
+            lastMouseX = x;
+            lastMouseY = y;
+        } else if (state == GLUT_UP) {
+            middleMouseButtonDown = false;
+        }
+    }
+}
+
+static void MotionCB(int x, int y)
+{
+    if (middleMouseButtonDown) {
+        int deltaX = x - lastMouseX;
+        int deltaY = y - lastMouseY;
+
+        cameraYaw   -= (float)deltaX * MouseSensitivity;
+        cameraPitch += (float)deltaY * MouseSensitivity;
+
+        // 限制俯仰角
+        if (cameraPitch > 89.0f) {
+            cameraPitch = 89.0f;
+        }
+        if (cameraPitch < -89.0f) {
+            cameraPitch = -89.0f;
+        }
+
+        lastMouseX = x;
+        lastMouseY = y;
+
+        // 可选：触发窗口重绘，如果不在 Idle 函数中持续重绘的话
+        // glutPostRedisplay();
+    }
+}
+// ----------------------
 
 // --- 根据输入状态更新相机 ---
 static void UpdateInputState()
@@ -274,16 +318,16 @@ static void RenderSceneCB()
     // ---- 渲染调试文本 ----
     std::ostringstream oss;
     oss << std::fixed << std::setprecision(2);
-    oss << "相机位置: (" << CameraPos.x << ", " << CameraPos.y << ", " << CameraPos.z << ")";
+    oss << "Cam Pos: (" << CameraPos.x << ", " << CameraPos.y << ", " << CameraPos.z << ")";
     RenderText(10.0f, WINDOW_HEIGHT - 20.0f, GLUT_BITMAP_HELVETICA_18, oss.str(), Vector3f(1.0f, 1.0f, 0.0f));
     oss.str(""); oss.clear();
-    oss << "相机旋转 (翻,偏,俯): (" << cameraRoll << ", " << cameraYaw << ", " << cameraPitch << ")";
+    oss << "Cam Rot: (" << cameraRoll << ", " << cameraYaw << ", " << cameraPitch << ")";
     RenderText(10.0f, WINDOW_HEIGHT - 40.0f, GLUT_BITMAP_HELVETICA_18, oss.str(), Vector3f(1.0f, 1.0f, 0.0f));
     oss.str(""); oss.clear();
-    oss << "物体位置 (实际): (" << Model.m[0][3] << ", " << Model.m[1][3] << ", " << Model.m[2][3] << ")";
+    oss << "Obj Pos: (" << Model.m[0][3] << ", " << Model.m[1][3] << ", " << Model.m[2][3] << ")";
     RenderText(10.0f, WINDOW_HEIGHT - 60.0f, GLUT_BITMAP_HELVETICA_18, oss.str(), Vector3f(1.0f, 1.0f, 0.0f));
     oss.str(""); oss.clear();
-    oss << "物体动画角度 (自转Y, 公转Y): (" << fmodf(Scale, 360.0f) << ", " << fmodf(OrbitScale, 360.0f) << ")";
+    oss << "Obj Anim: (" << fmodf(Scale, 360.0f) << ", " << fmodf(OrbitScale, 360.0f) << ")";
     RenderText(10.0f, WINDOW_HEIGHT - 80.0f, GLUT_BITMAP_HELVETICA_18, oss.str(), Vector3f(1.0f, 1.0f, 0.0f));
     // ----------------------
 
@@ -422,28 +466,30 @@ int main(int argc, char** argv)
     int x = 200; int y = 100; glutInitWindowPosition(x, y);
     int win = glutCreateWindow("实验 01"); // 修改窗口标题
     printf("窗口 ID: %d\n", win);
-    GLenum res = glewInit();
-    if (res != GLEW_OK) { fprintf(stderr, "错误: '%s'\n", glewGetErrorString(res)); return 1; }
+    GLenum err = glewInit();
+    if (GLEW_OK != err) {
+        fprintf(stderr, "错误: '%s'\n", glewGetErrorString(err));
+        return 1;
+    }
 
-    // 设置清屏颜色和开启深度/剔除
-    GLclampf Red = 0.2f, Green = 0.2f, Blue = 0.2f, Alpha = 0.0f;
-    glClearColor(Red, Green, Blue, Alpha);
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_CULL_FACE);
-    glFrontFace(GL_CW); // 顺时针为正面 (OpenGL 默认是 CCW)
-    glCullFace(GL_BACK); // 剔除背面
+    printf("GL 版本: %s\n", glGetString(GL_VERSION));
 
-    CreateVertexBuffer(); // 创建顶点缓冲
-    CreateIndexBuffer(); // 创建索引缓冲
-    CompileShaders(); // 编译链接着色器
+    glClearColor(0.1f, 0.1f, 0.1f, 0.0f); // 设置背景色为深灰色
+    glEnable(GL_DEPTH_TEST); // 启用深度测试
 
-    // --- 注册回调函数 ---
-    glutDisplayFunc(RenderSceneCB); // 渲染回调
-    glutKeyboardFunc(KeyboardDownCB); // 按键按下回调
-    glutKeyboardUpFunc(KeyboardUpCB);   // 按键释放回调
-    // ----------------------
+    CreateVertexBuffer();
+    CreateIndexBuffer();
 
-    glutMainLoop(); // 进入 GLUT 事件循环
+    CompileShaders();
+
+    glutDisplayFunc(RenderSceneCB);
+    glutIdleFunc(RenderSceneCB); // 使用 Idle 函数实现连续渲染和输入处理
+    glutKeyboardFunc(KeyboardDownCB);
+    glutKeyboardUpFunc(KeyboardUpCB);
+    glutMouseFunc(MouseCB);       // 注册鼠标按钮回调
+    glutMotionFunc(MotionCB);     // 注册鼠标移动回调 (按钮按下时)
+
+    glutMainLoop();
 
     return 0;
 }

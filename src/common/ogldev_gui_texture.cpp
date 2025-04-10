@@ -1,5 +1,5 @@
 /*
-    Copyright 2022 Etay Meiri
+        Copyright 2023 Etay Meiri
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -15,41 +15,34 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "bindless_tex_technique.h"
+#include "ogldev_math_3d.h"
+#include "ogldev_gui_texture.h"
 
 
-BindlessTextureTechnique::BindlessTextureTechnique()
+#define GUI_TEXTURE_UNIT       GL_TEXTURE0
+#define GUI_TEXTURE_UNIT_INDEX 0
+
+
+GUITexture::~GUITexture()
 {
 }
 
-bool BindlessTextureTechnique::Init()
+
+void GUITexture::Init(int x, int y, int Width, int Height)
 {
-    if (!Technique::Init()) {
-        return false;
-    }
-
-    if (!AddShader(GL_VERTEX_SHADER, "Shaders/quad.vs")) {
-        return false;
-    }
-
-    if (!AddShader(GL_FRAGMENT_SHADER, "bindless_texture.fs")) {
-        return false;
-    }
-
-    if (!Finalize()) {
-        return false;
-    }
-
-
-    GET_UNIFORM_AND_CHECK(m_texIndexLoc, "gTextureIndex");
-
-    return true;
+    m_screenQuad.Init(x, y, Width, Height);
+    m_guiTexTech.Init();
+    m_guiTexTech.Enable();
+    m_guiTexTech.SetTextureUnit(GUI_TEXTURE_UNIT_INDEX);
 }
 
 
-void BindlessTextureTechnique::SetTextureIndex(int Index)
+void GUITexture::Render(GLuint Texture)
 {
-    glUniform1i(m_texIndexLoc, Index);
+    glActiveTexture(GUI_TEXTURE_UNIT);
+    glBindTexture(GL_TEXTURE_2D, Texture);
+
+    m_guiTexTech.Enable();
+
+    m_screenQuad.Render();
 }
-
-

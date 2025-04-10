@@ -1,5 +1,5 @@
 /*
-    Copyright 2024 Etay Meiri
+    Copyright 2022 Etay Meiri
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -15,24 +15,24 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "water_technique.h"
+#include "ogldev_skydome_technique.h"
 
 
-WaterTechnique::WaterTechnique()
+SkydomeTechnique::SkydomeTechnique()
 {
 }
 
-bool WaterTechnique::Init()
+bool SkydomeTechnique::Init()
 {
     if (!Technique::Init()) {
         return false;
     }
 
-    if (!AddShader(GL_VERTEX_SHADER, "Shaders/square.vs")) {
+    if (!AddShader(GL_VERTEX_SHADER, "../common/Shaders/skydome.vs")) {
         return false;
     }
 
-    if (!AddShader(GL_FRAGMENT_SHADER, "water.fs")) {
+    if (!AddShader(GL_FRAGMENT_SHADER, "../common/Shaders/skydome.fs")) {
         return false;
     }
 
@@ -40,21 +40,25 @@ bool WaterTechnique::Init()
         return false;
     }
 
-    GET_UNIFORM_AND_CHECK(m_WVPLoc, "gWVP");
-    GET_UNIFORM_AND_CHECK(m_timeLoc, "iTime");
+    m_WVPLoc = GetUniformLocation("gWVP");
+    m_samplerLoc = GetUniformLocation("gSampler");
+
+    if (m_WVPLoc == INVALID_UNIFORM_LOCATION ||
+        m_samplerLoc == INVALID_UNIFORM_LOCATION) {
+        return false;
+    }
 
     return true;
 }
 
 
-void WaterTechnique::Render(const Matrix4f& WVP, float Time)
+void SkydomeTechnique::SetTextureUnit(unsigned int TextureUnit)
 {
-    Enable();
-
-    glUniformMatrix4fv(m_WVPLoc, 1, GL_TRUE, (const GLfloat*)WVP.m);
-    glUniform1f(m_timeLoc, Time);
-
-    glDrawArraysInstancedBaseInstance(GL_TRIANGLES, 0, 6, 1, 0);
+    glUniform1i(m_samplerLoc, TextureUnit);
 }
 
 
+void SkydomeTechnique::SetWVP(const Matrix4f& WVP)
+{
+    glUniformMatrix4fv(m_WVPLoc, 1, GL_TRUE, (const GLfloat*)WVP.m);
+}

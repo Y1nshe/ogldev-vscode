@@ -1,5 +1,6 @@
 /*
-    Copyright 2024 Etay Meiri
+
+        Copyright 2022 Etay Meiri
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -15,24 +16,25 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "water_technique.h"
+#include "ogldev_shadow_mapping_technique.h"
 
-
-WaterTechnique::WaterTechnique()
+ShadowMappingTechnique::ShadowMappingTechnique()
 {
+
 }
 
-bool WaterTechnique::Init()
+
+bool ShadowMappingTechnique::Init()
 {
     if (!Technique::Init()) {
         return false;
     }
 
-    if (!AddShader(GL_VERTEX_SHADER, "Shaders/square.vs")) {
+    if (!AddShader(GL_VERTEX_SHADER, "../common/Shaders/shadow_map.vs")) {
         return false;
     }
 
-    if (!AddShader(GL_FRAGMENT_SHADER, "water.fs")) {
+    if (!AddShader(GL_FRAGMENT_SHADER, "../common/Shaders/empty.fs")) {
         return false;
     }
 
@@ -41,20 +43,13 @@ bool WaterTechnique::Init()
     }
 
     GET_UNIFORM_AND_CHECK(m_WVPLoc, "gWVP");
-    GET_UNIFORM_AND_CHECK(m_timeLoc, "iTime");
 
     return true;
 }
 
 
-void WaterTechnique::Render(const Matrix4f& WVP, float Time)
+
+void ShadowMappingTechnique::SetWVP(const Matrix4f& WVP)
 {
-    Enable();
-
     glUniformMatrix4fv(m_WVPLoc, 1, GL_TRUE, (const GLfloat*)WVP.m);
-    glUniform1f(m_timeLoc, Time);
-
-    glDrawArraysInstancedBaseInstance(GL_TRIANGLES, 0, 6, 1, 0);
 }
-
-

@@ -15,24 +15,24 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "water_technique.h"
+#include "ogldev_color_technique.h"
 
 
-WaterTechnique::WaterTechnique()
+ColorTechnique::ColorTechnique()
 {
 }
 
-bool WaterTechnique::Init()
+bool ColorTechnique::Init()
 {
     if (!Technique::Init()) {
         return false;
     }
 
-    if (!AddShader(GL_VERTEX_SHADER, "Shaders/square.vs")) {
+    if (!AddShader(GL_VERTEX_SHADER, "../common/Shaders/wvp.vs")) {
         return false;
     }
 
-    if (!AddShader(GL_FRAGMENT_SHADER, "water.fs")) {
+    if (!AddShader(GL_FRAGMENT_SHADER, "../common/Shaders/color.fs")) {
         return false;
     }
 
@@ -41,20 +41,19 @@ bool WaterTechnique::Init()
     }
 
     GET_UNIFORM_AND_CHECK(m_WVPLoc, "gWVP");
-    GET_UNIFORM_AND_CHECK(m_timeLoc, "iTime");
+    GET_UNIFORM_AND_CHECK(m_colorLoc, "gColor");
 
     return true;
 }
 
 
-void WaterTechnique::Render(const Matrix4f& WVP, float Time)
+void ColorTechnique::SetWVP(const Matrix4f& WVP)
 {
-    Enable();
-
     glUniformMatrix4fv(m_WVPLoc, 1, GL_TRUE, (const GLfloat*)WVP.m);
-    glUniform1f(m_timeLoc, Time);
-
-    glDrawArraysInstancedBaseInstance(GL_TRIANGLES, 0, 6, 1, 0);
 }
 
 
+void ColorTechnique::SetColor(const Vector4f& Color)
+{
+    glUniform4f(m_colorLoc, Color.r, Color.g, Color.b, Color.a);
+}
