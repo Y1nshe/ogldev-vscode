@@ -20,7 +20,11 @@
 
 #include "demolition_rendering_system.h"
 
+// Only define GLFW_DLL if it hasn't been defined elsewhere (e.g., by CMake)
+#ifndef GLFW_DLL
 #define GLFW_DLL
+#endif
+
 #include <GLFW/glfw3.h>
 
 
@@ -46,7 +50,7 @@ protected:
 
 private:
     void InitGUI();
-    
+
     bool m_isWireframe = false;
     bool m_leftMousePressed = false;
 };

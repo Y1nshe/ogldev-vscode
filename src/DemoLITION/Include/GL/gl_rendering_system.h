@@ -21,7 +21,13 @@
 #pragma once
 
 #include <GL/glew.h>
+#include <vector>
+
+// Only define GLFW_DLL if it hasn't been defined elsewhere (e.g., by CMake)
+#ifndef GLFW_DLL
 #define GLFW_DLL
+#endif
+
 #include <GLFW/glfw3.h>
 
 #include "Int/core_rendering_system.h"
@@ -52,9 +58,9 @@ class RenderingSystemGL : public CoreRenderingSystem
     virtual void Execute();
 
     void OnKeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
-    
+
     void OnCursorPosCallback(GLFWwindow* window, double x, double y);
-    
+
     void OnMouseButtonCallback(GLFWwindow* window, int Button, int Action, int Mode);
 
     void GetMousePos(void* pWindow, int& x, int& y);
@@ -68,7 +74,7 @@ class RenderingSystemGL : public CoreRenderingSystem
 
     void InitCallbacks();
 
-    void SetDefaultGLState();    
+    void SetDefaultGLState();
 
     GLFWwindow* m_pWindow = NULL;
     ForwardRenderer m_forwardRenderer;
