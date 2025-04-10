@@ -45,47 +45,59 @@ target_link_libraries(${TUTORIAL_NAME} PRIVATE
 # --- DemoLITION 资源处理 (如果需要) ---
 list(FIND DEPENDENCIES_LIST "demolition_lib" _demolition_index)
 if(_demolition_index GREATER -1)
-    message(STATUS "[${TUTORIAL_NAME}] Depends on demolition_lib, copying required shaders.")
-    set(DEMOLITION_SHADER_SRC_DIR "${CMAKE_SOURCE_DIR}/src/DemoLITION/Shaders/GL") # 假设 shaders 在这里
-    set(DEMOLITION_SHADER_DEST_DIR "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${TUTORIAL_NAME}/Framework/Shaders/GL") # 目标路径
+    message(STATUS "[${TUTORIAL_NAME}] Depends on demolition_lib, configuring shader directory link.")
+    set(DEMOLITION_SHADER_SRC_DIR "${CMAKE_SOURCE_DIR}/src/DemoLITION/Shaders/GL") # 源目录
+    # 目标链接路径: build/bin/<TutorialName>/Framework/Shaders/GL
+    set(DEMOLITION_SHADER_LINK_PARENT_DIR "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${TUTORIAL_NAME}/Framework/Shaders") # 链接所在的父目录
+    set(DEMOLITION_SHADER_LINK_NAME "GL") # 链接名
+    set(DEMOLITION_SHADER_LINK_PATH "${DEMOLITION_SHADER_LINK_PARENT_DIR}/${DEMOLITION_SHADER_LINK_NAME}") # 完整的链接路径
 
-    # 查找需要复制的 DemoLITION 着色器
-    file(GLOB DEMOLITION_SHADER_FILES CONFIGURE_DEPENDS
-        "${DEMOLITION_SHADER_SRC_DIR}/forward_lighting.vs"
-        "${DEMOLITION_SHADER_SRC_DIR}/forward_lighting.fs"
-        # 在这里添加其他 DemoLITION 需要的着色器...
-    )
+    # 检查源目录是否存在
+    if(EXISTS "${DEMOLITION_SHADER_SRC_DIR}")
+        # 确保链接的父目录存在
+        file(MAKE_DIRECTORY "${DEMOLITION_SHADER_LINK_PARENT_DIR}")
 
-    if(DEMOLITION_SHADER_FILES)
-        set(COPIED_DEMOLITION_SHADERS "")
-        # 确保目标子目录存在
-        file(MAKE_DIRECTORY "${DEMOLITION_SHADER_DEST_DIR}")
+        # 检查链接是否已存在
+        if(NOT EXISTS "${DEMOLITION_SHADER_LINK_PATH}")
+            message(STATUS "[${TUTORIAL_NAME}] Creating link/junction for DemoLITION shaders: ${DEMOLITION_SHADER_LINK_PATH} -> ${DEMOLITION_SHADER_SRC_DIR}")
 
-        foreach(SHADER_ABS_PATH ${DEMOLITION_SHADER_FILES})
-            get_filename_component(SHADER_FILENAME ${SHADER_ABS_PATH} NAME)
-            set(SHADER_DEST_PATH "${DEMOLITION_SHADER_DEST_DIR}/${SHADER_FILENAME}")
+            # 计算从链接父目录到源目录的相对路径
+            file(RELATIVE_PATH TARGET_REL_PATH "${DEMOLITION_SHADER_LINK_PARENT_DIR}" "${DEMOLITION_SHADER_SRC_DIR}")
 
-            # 添加自定义命令，仅在文件更改时复制
-            add_custom_command(
-                OUTPUT ${SHADER_DEST_PATH}
-                COMMAND ${CMAKE_COMMAND} -E copy_if_different ${SHADER_ABS_PATH} ${SHADER_DEST_PATH}
-                DEPENDS ${SHADER_ABS_PATH}
-                COMMENT "Copying DemoLITION shader ${SHADER_FILENAME} for ${TUTORIAL_NAME}"
-                VERBATIM
-            )
-            list(APPEND COPIED_DEMOLITION_SHADERS ${SHADER_DEST_PATH})
-        endforeach()
+            # 根据操作系统执行不同的链接命令
+            if(WIN32)
+                # Windows: mklink /J <LinkName> <RelativeTargetPath>
+                string(REPLACE "/" "\\" TARGET_REL_PATH_WIN "${TARGET_REL_PATH}")
+                message(STATUS "[${TUTORIAL_NAME}] Windows: mklink /J "${DEMOLITION_SHADER_LINK_NAME}" "${TARGET_REL_PATH_WIN}" in ${DEMOLITION_SHADER_LINK_PARENT_DIR}")
+                execute_process(COMMAND cmd /c mklink /J "${DEMOLITION_SHADER_LINK_NAME}" "${TARGET_REL_PATH_WIN}"
+                                WORKING_DIRECTORY "${DEMOLITION_SHADER_LINK_PARENT_DIR}"
+                                RESULT_VARIABLE MKDIR_RESULT
+                                OUTPUT_VARIABLE MKDIR_OUTPUT
+                                ERROR_VARIABLE MKDIR_ERROR)
+            else()
+                # Unix: ln -s <RelativeTargetPath> <LinkName>
+                 message(STATUS "[${TUTORIAL_NAME}] Unix: ln -s "${TARGET_REL_PATH}" "${DEMOLITION_SHADER_LINK_NAME}" in ${DEMOLITION_SHADER_LINK_PARENT_DIR}")
+                execute_process(COMMAND ln -s "${TARGET_REL_PATH}" "${DEMOLITION_SHADER_LINK_NAME}"
+                                WORKING_DIRECTORY "${DEMOLITION_SHADER_LINK_PARENT_DIR}"
+                                RESULT_VARIABLE MKDIR_RESULT
+                                OUTPUT_VARIABLE MKDIR_OUTPUT
+                                ERROR_VARIABLE MKDIR_ERROR)
+            endif()
 
-        # 创建一个聚合目标来管理 DemoLITION 资源的复制
-        add_custom_target(CopyDemoLITIONShaders_${TUTORIAL_NAME} ALL DEPENDS ${COPIED_DEMOLITION_SHADERS})
-        # 使可执行文件依赖于 DemoLITION 资源复制目标
-        add_dependencies(${TUTORIAL_NAME} CopyDemoLITIONShaders_${TUTORIAL_NAME})
-        message(STATUS "[${TUTORIAL_NAME}] Configured copying for DemoLITION shaders.")
+            # 检查链接创建是否成功
+            if(NOT MKDIR_RESULT EQUAL 0)
+                message(WARNING "[${TUTORIAL_NAME}] Failed to create link/junction for DemoLITION shaders at '${DEMOLITION_SHADER_LINK_PATH}'. Error code: ${MKDIR_RESULT}. Output: ${MKDIR_OUTPUT}. Error: ${MKDIR_ERROR}")
+            else()
+                 message(STATUS "[${TUTORIAL_NAME}] Successfully created link/junction for DemoLITION shaders.")
+            endif()
+        else()
+             message(STATUS "[${TUTORIAL_NAME}] Link/junction for DemoLITION shaders '${DEMOLITION_SHADER_LINK_PATH}' already exists. Skipping creation.")
+        endif()
     else()
-        message(WARNING "[${TUTORIAL_NAME}] Could not find DemoLITION shaders in ${DEMOLITION_SHADER_SRC_DIR}.")
+        message(WARNING "[${TUTORIAL_NAME}] DemoLITION shader source directory not found: ${DEMOLITION_SHADER_SRC_DIR}. Skipping link creation.")
     endif()
 else()
-     message(STATUS "[${TUTORIAL_NAME}] Does not depend on demolition_lib, skipping DemoLITION shader copy.")
+     message(STATUS "[${TUTORIAL_NAME}] Does not depend on demolition_lib, skipping DemoLITION shader link creation.")
 endif()
 
 # --- 教程特定资源文件处理 ---
