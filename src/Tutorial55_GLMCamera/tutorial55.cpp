@@ -93,8 +93,8 @@ public:
     virtual void RenderSceneCB(float dt)
     {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		
-		m_pCamera->Update(dt);		
+
+		m_pCamera->Update(dt);
 
         glm::mat4 VP = m_pCamera->GetVPMatrix();
 
@@ -126,20 +126,21 @@ public:
         float FOV = 45.0f;
         float zNear = 1.0f;
         float zFar = 1000.0f;
-        PersProjInfo persProjInfo = { FOV, (float)WINDOW_WIDTH, (float)WINDOW_HEIGHT, 
+        PersProjInfo persProjInfo = { FOV, (float)WINDOW_WIDTH, (float)WINDOW_HEIGHT,
                                       zNear, zFar };
 
         glm::vec3 Pos(0.0f, 2.1f, 0.0f);
         glm::vec3 Target(0.0f, 2.1f, 1.0f);
         glm::vec3 Up(0.0, 1.0f, 0.0f);
 
-        m_pCamera = new GLMCameraFirstPerson(Pos, Target, Up, persProjInfo);   
+        m_pCamera = new GLMCameraFirstPerson();
+        m_pCamera->Init(Pos, Target, Up, persProjInfo);
     }
 
 
     void InitInfiniteGrid()
     {
-        m_infiniteGrid.Init(); 
+        m_infiniteGrid.Init();
     }
 
     InfiniteGrid m_infiniteGrid;

@@ -7,6 +7,7 @@
         }
     },
     "terminal.integrated.defaultProfile.windows": "MSYS2 MINGW64",
+
     "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
     "C_Cpp.default.compilerPath": "${env:MSYS64_ROOT}\\mingw64\\bin\\g++.exe",
     "C_Cpp.default.includePath": [
@@ -16,6 +17,7 @@
     "C_Cpp.default.cppStandard": "c++17",
     "C_Cpp.default.intelliSenseMode": "windows-gcc-x64",
     "C_Cpp.enhancedColorization": "enabled",
+
     "cmake.generator": "Ninja",
     "cmake.configureArgs": [
         "-DCMAKE_BUILD_TYPE=Debug"
@@ -23,7 +25,19 @@
     "cmake.configureEnvironment": {
         "CMAKE_PREFIX_PATH": "${env:MSYS64_ROOT}\\mingw64"
     },
-    "cmake.preferredKits": [
-        "GCC 14.2.0 x86_64-w64-mingw32 (mingw64)"
-    ]
+    "cmake.cmakePath": "${env:MSYS64_ROOT}\\mingw64\\bin\\cmake.exe",
+    "cmake.kits": [
+        {
+            "name": "GCC 14.2.0 x86_64-w64-mingw32 (mingw64)",
+            "compilers": {
+                "C": "${env:MSYS64_ROOT}\\mingw64\\bin\\gcc.exe",
+                "CXX": "${env:MSYS64_ROOT}\\mingw64\\bin\\g++.exe"
+            }
+        }
+    ],
+    "files.associations": {
+        "deque": "cpp",
+        "string": "cpp",
+        "vector": "cpp"
+    }
 }

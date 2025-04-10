@@ -1,0 +1,10 @@
+[
+    {
+        "name": "mingw64",
+        "compilers": {
+            "C": "${env:MSYS64_ROOT}\\mingw64\\bin\\gcc.exe",
+            "CXX": "${env:MSYS64_ROOT}\\mingw64\\bin\\g++.exe"
+        },
+        "isTrusted": true
+    }
+]

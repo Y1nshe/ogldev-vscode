@@ -10,7 +10,7 @@ TARGET_SRC_BASE_DIR = "src"                     # CMake 源文件生成的目标
 PROJECT_ROOT = os.getcwd()                      # 假设脚本在项目根目录运行
 COMMON_DIR_NAME = "Common"                      # 原始项目中通用代码的目录名
 MAIN_INCLUDE_DIR_NAME = "Include"               # 主包含目录名 (其下的文件不复制)
-RESOURCE_EXTENSIONS = {".fs", ".vs", ".glsl"}   # 需要复制的资源文件扩展名 (小写) - 添加了 .glsl
+RESOURCE_EXTENSIONS = {".fs", ".vs", ".glsl", ".cs"}   # 需要复制的资源文件扩展名 (小写) - 添加了 .glsl
 # 配置用于解析依赖项的 VS 配置 (尝试查找此配置下的 <AdditionalDependencies>)
 VS_DEPENDENCY_CONFIG_CONDITION = "'$(Configuration)|$(Platform)'=='Debug|x64'"
 # --- /配置 ---

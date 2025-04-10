@@ -67,13 +67,31 @@ public:
      //   m_pScene->SetCamera(Vector3f(0.0f, 1.0f, -2.5f), Vector3f(0.000823f, -0.331338f, 0.943512f));
      //   m_pScene->SetCamera(Vector3f(-2.5f, 2.0f, -2.5f), Vector3f(0.66f, -0.5f, 0.66f));
      m_pScene->SetCamera(Vector3f(0.0f, 0.75f, -2.5f), Vector3f(0.0f, -0.2f, 1.0f));
-   // 
+   //
    //     m_pScene->SetCamera(Vector3f(0.0f, 5.0f, 0.5f), Vector3f(-0.0f, -1.0f, 0.5f));
 
         m_pScene->SetCameraSpeed(0.1f);
 
         //m_pScene->GetDirLights().push_back(m_dirLight);
         m_pScene->GetPointLights().push_back(m_pointLight);
+
+        // --- 添加虚拟物体以触发 ForwardLighting uniform 设置 ---
+        Model* pDummyModel = m_pRenderingSystem->LoadModel("../Content/sphere.obj"); // 尝试加载球体
+        if (pDummyModel) {
+            SceneObject* pDummyObject = m_pScene->CreateSceneObject(pDummyModel);
+            if (pDummyObject) {
+                // 可以将物体放在视野外或使其非常小来隐藏它
+                pDummyObject->SetPosition(0.0f, -1000.0f, 0.0f); // 放在很远的地方
+                pDummyObject->SetScale(0.001f, 0.001f, 0.001f);  // 设置得很小
+                m_pScene->AddToRenderList(pDummyObject);
+                printf("[Tutorial54] Added dummy object to trigger lighting pass.\n");
+            } else {
+                printf("[Tutorial54] Warning: Failed to create dummy scene object.\n");
+            }
+        } else {
+             printf("[Tutorial54] Warning: Failed to load dummy model '../Content/sphere.obj'. Lighting pass might not be triggered correctly.\n");
+        }
+        // --- 虚拟物体添加结束 ---
 
         m_pRenderingSystem->SetScene(m_pScene);
 
@@ -109,11 +127,11 @@ public:
 
         bool my_tool_active = false;
 
-        ImGui::Begin("Test", &my_tool_active, ImGuiWindowFlags_MenuBar);      
+        ImGui::Begin("Test", &my_tool_active, ImGuiWindowFlags_MenuBar);
 
         ImGui::SliderFloat("Grid Cell Size", &this->m_gridCellSize, 0.01f, 0.2f);
         m_pScene->GetConfig()->GetInfiniteGrid().CellSize = m_gridCellSize;
-        
+
         ImGui::End();
 
         // Rendering
@@ -141,7 +159,7 @@ public:
             return BaseGLApp::OnMouseButton(Button, Action, Mode, x, y);
         }
     }
-    
+
 
     bool OnKeyboard(int key, int action)
     {
@@ -157,12 +175,12 @@ public:
         default:
             HandledByMe = false;
         }
-            
+
         if (HandledByMe) {
             return true;
         } else {
             return BaseGLApp::OnKeyboard(key, action);
-        }            
+        }
     }
 
 private:
