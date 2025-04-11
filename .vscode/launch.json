@@ -2,38 +2,39 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Debug Current Tutorial (GDB via Pipe)",
+      "name": "Debug Current Tutorial (GDB Direct)",
       "type": "cppdbg",
       "request": "launch",
       // 要调试的程序路径
       // ${workspaceFolder} 指向项目根目录
       // 我们构建的可执行文件位于 build/bin/ 下
       // ${fileDirnameBasename} 获取当前文件所在目录名 (例如 Tutorial01)
-      "program": "${fileDirnameBasename}.exe",
+      "program": "${workspaceFolder}/build/bin/${fileDirnameBasename}/${fileDirnameBasename}.exe",
       "args": [], // 如果程序需要命令行参数，在这里添加
       "stopAtEntry": false, // 是否在 main 函数入口处停止
       "cwd": "${workspaceFolder}/build/bin/${fileDirnameBasename}", // 设置工作目录为可执行文件所在目录
       "externalConsole": false, // Use an external console instead of integrated one
       "MIMode": "gdb",
+      "miDebuggerPath": "${env:MSYS64_ROOT}/mingw64/bin/gdb.exe",
       // --- Pipe Transport Configuration ---
-      "pipeTransport": {
-        "pipeCwd": "${workspaceFolder}", // Working directory for the pipe program
-        "pipeProgram": "${env:MSYS64_ROOT}/msys2_shell.cmd", // The program to launch GDB
-        "pipeArgs": [                  // Arguments for pipeProgram
-          "-mingw64",
-          "-no-start",
-          "-defterm",
-          "-here",                   // Start shell in pipeCwd or current dir
-          "-c",                      // Execute the following command string
-          // Command to execute within the MINGW64 shell:
-          // Start gdb using the MI interface needed by VS Code
-          "gdb --interpreter=mi"
-        ],
-        // Path to the actual debugger executable *within the target environment*
-        // "debuggerPath": "/mingw64/bin/gdb.exe", // Use MSYS-style path here maybe?
-        // For debugging the pipe connection itself:
-        //"logging": { "engineLogging": true }
-      },
+      // "pipeTransport": {
+      //   "pipeCwd": "${workspaceFolder}", // Working directory for the pipe program
+      //   "pipeProgram": "${env:MSYS64_ROOT}/msys2_shell.cmd", // The program to launch GDB
+      //   "pipeArgs": [                  // Arguments for pipeProgram
+      //     "-mingw64",
+      //     "-no-start",
+      //     "-defterm",
+      //     "-here",                   // Start shell in pipeCwd or current dir
+      //     "-c",                      // Execute the following command string
+      //     // Command to execute within the MINGW64 shell:
+      //     // Start gdb using the MI interface needed by VS Code
+      //     "gdb --interpreter=mi"
+      //   ],
+      //   // Path to the actual debugger executable *within the target environment*
+      //   // "debuggerPath": "/mingw64/bin/gdb.exe", // Use MSYS-style path here maybe?
+      //   // For debugging the pipe connection itself:
+      //   //"logging": { "engineLogging": true }
+      // },
       // -------------------------------------
       "setupCommands": [
         {
