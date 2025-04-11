@@ -188,7 +188,9 @@ set(freetype-gl_BUILD_DEMOS OFF CACHE BOOL "Disable freetype-gl demo build" FORC
 set(freetype-gl_BUILD_TESTS OFF CACHE BOOL "Disable freetype-gl test build" FORCE)
 add_subdirectory(src/freetype-gl)
 
-add_subdirectory(src/Experiment01)
+add_subdirectory(src/Experiments/Experiment01)
+add_subdirectory(src/Experiments/Experiment02)
+add_subdirectory(src/Experiments/Experiment03)
 
 add_subdirectory(src/Tutorials/Tutorial01)
 add_subdirectory(src/Tutorials/Tutorial02)

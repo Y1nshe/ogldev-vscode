@@ -14,18 +14,12 @@
 
 struct Vertex {
     Vector3f pos;
-    Vector3f color;
 
     Vertex() {}
 
     Vertex(float x, float y, float z)
     {
         pos = Vector3f(x, y, z);
-
-        float red   = (float)rand() / (float)RAND_MAX;
-        float green = (float)rand() / (float)RAND_MAX;
-        float blue  = (float)rand() / (float)RAND_MAX;
-        color = Vector3f(red, green, blue);
     }
 };
 
@@ -288,9 +282,7 @@ static void RenderSceneCB()
     glBindBuffer(GL_ARRAY_BUFFER, VBO); // 绑定顶点缓冲
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO); // 绑定索引缓冲
     glEnableVertexAttribArray(0); // 启用顶点位置属性
-    glEnableVertexAttribArray(1); // 启用顶点颜色属性
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), 0); // 设置位置属性指针
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float))); // 设置颜色属性指针
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), 0); // 设置位置属性指针
 
     Matrix4f FinalMatrix = Projection * View * Model; // 计算最终变换矩阵
     glUniformMatrix4fv(gWorldLocation, 1, GL_TRUE, &FinalMatrix.m[0][0]); // 发送矩阵到着色器
@@ -308,7 +300,6 @@ static void RenderSceneCB()
 
     // 恢复状态
     glDisableVertexAttribArray(0); // 禁用顶点属性
-    glDisableVertexAttribArray(1);
     glBindBuffer(GL_ARRAY_BUFFER, 0); // 解绑 VBO
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0); // 解绑 IBO
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); // 恢复多边形填充模式
@@ -459,7 +450,6 @@ static void CompileShaders()
 
 int main(int argc, char** argv)
 {
-    srand(GetCurrentProcessId());
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE|GLUT_RGBA|GLUT_DEPTH);
     glutInitWindowSize(WINDOW_WIDTH, WINDOW_HEIGHT);

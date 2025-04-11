@@ -6,12 +6,13 @@ layout (location = 1) in vec3 inColor;
 uniform mat4 gWorld;
 uniform bool isWireframe;
 
-out vec4 Color;
 out vec4 WireframeColor;
+out vec3 WorldPos_FS;
 
 void main()
 {
-    gl_Position = gWorld * vec4(Position, 1.0);
-    Color = vec4(inColor, 1.0);
+    vec4 worldPos = gWorld * vec4(Position, 1.0);
+    gl_Position = worldPos;
+    WorldPos_FS = worldPos.xyz;
     WireframeColor = vec4(1.0, 1.0, 1.0, 1.0); // 白色边线
 }
